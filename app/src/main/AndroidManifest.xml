@@ -21,6 +21,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".time_task.TimeTask"/>
+
+        <receiver android:name=".time_task.AlarmReceiver"
+            android:exported="false"/>
+
     </application>
+
 
 </manifest>
