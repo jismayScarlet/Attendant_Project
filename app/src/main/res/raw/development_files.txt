@@ -1,0 +1,3 @@
+聯絡電郵：jismayproject@gmail.com
+ver.0.1.0
+TimeTask所有的功能都做出來了，暫且不更新此頁面的功能，如有bug請電郵告知，謝謝。
