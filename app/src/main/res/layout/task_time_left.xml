@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true">
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:hapticFeedbackEnabled="false"
+    android:paddingHorizontal="4dp"
     tools:context=".time_task.TimeTask">
 
     <!-- 現在日期時間 -->
-    <TextView
-        android:id="@+id/tv_current_time"
-        android:layout_width="match_parent"
-        android:layout_height="61dp"
-        android:gravity="center"
-        android:text="現在日期時間"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- 目標時間輸入框 -->
 
@@ -29,81 +25,261 @@
     <!-- 獨立鈴聲按鈕 -->
 
     <TextView
-        android:id="@+id/et_target_time"
-        android:layout_width="145dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="48dp"
+        android:id="@+id/tv_costedTime"
+        android:layout_width="100dp"
+        android:layout_height="42dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:gravity="center|left"
+        android:hint="總花費時間"
+        android:text="預計花費時間"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="@+id/swt_alarm_set"
+        app:layout_constraintTop_toTopOf="@+id/btn_taskconfirm" />
+
+    <TextView
+        android:id="@+id/tv_current_time"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="5dp"
+        android:autoSizeMaxTextSize="20sp"
+        android:autoSizeTextType="uniform"
+        android:gravity="center|start"
+        android:text="現在日期時間"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_target_time"
+        android:layout_width="0dp"
+        android:layout_height="35dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeTextType="uniform"
         android:gravity="center"
         android:hint="未設定目標時間"
         android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tv_current_time"
         app:layout_constraintTop_toBottomOf="@+id/tv_current_time" />
 
     <TextView
         android:id="@+id/tv_remaining_time"
-        android:layout_width="248dp"
-        android:layout_height="49dp"
+        android:layout_width="0dp"
+        android:layout_height="32dp"
 
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginStart="5dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeTextType="uniform"
         android:gravity="center"
+        android:padding="0dp"
+        android:paddingEnd="50dp"
         android:text="距離目標剩餘時間"
         android:textSize="16sp"
-        app:layout_constraintStart_toEndOf="@+id/et_target_time"
-        app:layout_constraintTop_toBottomOf="@+id/tv_current_time" />
-
-    <Button
-        android:id="@+id/btn_default_ringtone"
-        android:layout_width="95dp"
-        android:layout_height="49dp"
-        android:layout_marginStart="4dp"
-        android:text="預設鈴聲"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_current_time" />
+        android:typeface="normal"
+        app:layout_constraintEnd_toEndOf="@+id/tv_current_time"
+        app:layout_constraintStart_toEndOf="@+id/tv_target_time"
+        app:layout_constraintTop_toTopOf="@+id/tv_target_time" />
 
     <Button
         android:id="@+id/btn_set_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="︿ 目標時間設定按鈕"
-        app:layout_constraintTop_toBottomOf="@+id/et_target_time"
-        tools:layout_editor_absoluteX="4dp" />
-
-    <Button
-        android:id="@+id/btn_custom_ringtone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
-        android:text="獨立鈴聲"
-        app:layout_constraintStart_toEndOf="@+id/btn_set_time"
-        app:layout_constraintTop_toBottomOf="@+id/et_target_time" />
-
-    <Switch
-        android:id="@+id/swt_alarm_set"
-        android:layout_width="125dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="10dp"
-        android:showText="true"
-        android:text="任務"
-        android:textOff="Off"
-        android:textOn="On"
-        app:layout_constraintStart_toEndOf="@+id/btn_custom_ringtone"
-        app:layout_constraintTop_toBottomOf="@+id/et_target_time" />
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:text="︿ 任務開始時間"
+        app:layout_constraintStart_toStartOf="@+id/tv_target_time"
+        app:layout_constraintTop_toBottomOf="@+id/tv_target_time" />
 
     <Button
         android:id="@+id/btn_time_restore"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="︿使用上次啟動任務時間 xx:xx"
-        app:layout_constraintTop_toBottomOf="@+id/btn_set_time"
-        tools:layout_editor_absoluteX="4dp" />
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:gravity="start"
+        android:text="＜復原 xx:xx"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_set_time"
+        app:layout_constraintTop_toTopOf="@+id/btn_set_time" />
+
+    <TextView
+        android:id="@+id/tv_ringtone1"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="5dp"
+        android:autoSizeTextType="uniform"
+        android:background="#2196F3"
+        android:text="預設鈴聲"
+        app:layout_constraintEnd_toStartOf="@+id/swt_alarm_set"
+        app:layout_constraintStart_toEndOf="@+id/btn_custom_ringtone"
+        app:layout_constraintTop_toTopOf="@+id/btn_custom_ringtone" />
+
+    <Switch
+        android:id="@+id/swt_alarm_set"
+        android:layout_width="128dp"
+        android:layout_height="46dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:background="@drawable/ic_launcher_background"
+        android:backgroundTint="#037D08"
+        android:backgroundTintMode="add"
+        android:gravity="center_vertical"
+        android:paddingStart="5dp"
+        android:paddingEnd="40dp"
+        android:showText="true"
+        android:text="任務"
+        android:textOff="啟動"
+        android:textOn="終止"
+        android:thumbTextPadding="-10dp"
+        android:thumbTint="#11B718"
+        android:trackTint="#4CAF50"
+        app:layout_constraintEnd_toEndOf="@+id/btn_time_restore"
+        app:layout_constraintTop_toTopOf="@+id/tv_ringtone1" />
+
+    <Button
+        android:id="@+id/btn_custom_ringtone"
+        android:layout_width="100dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:text="鈴聲設定"
+        app:layout_constraintStart_toStartOf="@+id/btn_set_time"
+        app:layout_constraintTop_toBottomOf="@+id/btn_set_time" />
+
+    <Button
+        android:id="@+id/btn_timeCostSet"
+        android:layout_width="130dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:hint="(分鐘) 結束時會通知並且記錄於任務心得中"
+        android:text="預計花費時間"
+        app:layout_constraintStart_toStartOf="@+id/btn_custom_ringtone"
+        app:layout_constraintTop_toBottomOf="@+id/btn_custom_ringtone" />
+
+    <Button
+        android:id="@+id/btn_taskconfirm"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:hint="紀錄實際完成時間於任務心得中"
+        android:text="任務完成"
+        app:layout_constraintEnd_toStartOf="@+id/tv_costedTime"
+        app:layout_constraintStart_toEndOf="@+id/btn_timeCostSet"
+        app:layout_constraintTop_toTopOf="@+id/btn_timeCostSet" />
+
+    <EditText
+        android:id="@+id/et_taskName"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeTextType="uniform"
+        android:background="@android:color/transparent"
+        android:hint="任務名稱"
+        android:inputType="text"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/swt_alarm_set"
+        app:layout_constraintStart_toStartOf="@+id/btn_custom_ringtone"
+        app:layout_constraintTop_toBottomOf="@+id/btn_timeCostSet" />
+
+    <EditText
+        android:id="@+id/et_taskDetailExcept"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeTextType="uniform"
+        android:gravity="top|left"
+        android:hint="預定達成任務結果"
+        android:inputType="text"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="@+id/et_taskName"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/et_taskName"
+        app:layout_constraintTop_toBottomOf="@+id/et_taskName" />
+
+    <EditText
+        android:id="@+id/et_taskDetailRealize"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeTextType="uniform"
+        android:hint="實際任務結果"
+        app:layout_constraintEnd_toEndOf="@+id/et_taskDetailExcept"
+        app:layout_constraintStart_toStartOf="@+id/et_taskDetailExcept"
+        app:layout_constraintTop_toBottomOf="@+id/et_taskDetailExcept" />
+
+    <EditText
+        android:id="@+id/et_taskDetailReplenish"
+        android:layout_width="0dp"
+        android:layout_height="255dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeTextType="uniform"
+        android:gravity="top|left"
+        android:hint="補充內容"
+        app:layout_constraintEnd_toEndOf="@+id/et_taskDetailRealize"
+        app:layout_constraintStart_toStartOf="@+id/et_taskDetailRealize"
+        app:layout_constraintTop_toBottomOf="@+id/et_taskDetailRealize" />
+
+    <ImageButton
+        android:id="@+id/btn_usage"
+        android:layout_width="59dp"
+        android:layout_height="54dp"
+        android:background="#00000000"
+        android:src="@android:drawable/ic_menu_info_details"
+        app:layout_constraintEnd_toEndOf="@+id/tv_current_time"
+        app:layout_constraintTop_toTopOf="@+id/tv_current_time" />
+
+    <Button
+        android:id="@+id/btn_clear"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:text="清除任務"
+        app:layout_constraintStart_toStartOf="@+id/et_taskDetailReplenish"
+        app:layout_constraintTop_toBottomOf="@+id/et_taskDetailReplenish" />
+
+    <Button
+        android:id="@+id/btn_outPutFile"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:text="輸出檔案"
+        app:layout_constraintStart_toEndOf="@+id/btn_clear"
+        app:layout_constraintTop_toTopOf="@+id/btn_clear" />
+
+    <Button
+        android:id="@+id/btn_sample"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="5dp"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeTextType="uniform"
+        android:text="補充內容範本"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_outPutFile"
+        app:layout_constraintTop_toTopOf="@+id/btn_outPutFile" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
