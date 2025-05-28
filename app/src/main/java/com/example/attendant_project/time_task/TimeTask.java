@@ -11,9 +11,11 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -21,6 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.example.attendant_project.R;
 
@@ -45,7 +48,7 @@ public class TimeTask extends AppCompatActivity {
     TextView tv_timeNow ,tv_target_time,tv_remaining_time,tv_ringtone1,tv_costedTime;
     Switch swt_alarm_set;
     CallAlarm callAlarm;
-    Button btn_timeSet,btn_timeSetRestore,btn_musicSet,btn_timeCostSet,btn_taskconfirm,btn_outPutFile,btn_clear,btn_sample;
+    Button btn_timeSet,btn_timeSetRestore,btn_musicSet,btn_timeCostSet,btn_taskconfirm,btn_outPutFile,btn_clear,btn_sample,btn_timeSaver;
     ImageButton btn_usage;
     int nowHour,nowMinute;
     private PeriodicTaskHandler periodicTaskHandler; //背景執行緒CLASS
@@ -55,6 +58,8 @@ public class TimeTask extends AppCompatActivity {
     private EditText et_taskName,et_taskDetailExcept,et_taskDetailRealize,et_taskDetailReplenish;
     String timeSetMemery = null;
     int[] cost = null;int costTotal = 0;
+    EditText ett_timeSave;
+    CheckedTextView ctv_releaseTime;
 
 
     @Override
@@ -80,9 +85,18 @@ public class TimeTask extends AppCompatActivity {
         btn_usage = findViewById(R.id.btn_usage);
         btn_clear = findViewById(R.id.btn_clear);
         btn_sample = findViewById(R.id.btn_sample);
+        btn_timeSaver = findViewById(R.id.btn_timeSaver);
+        ett_timeSave = findViewById(R.id.ett_timeSave);
+        ctv_releaseTime = findViewById(R.id.ctv_releaseTime);
 
         TextWatcher textWatcher = new TextWatcher();
 
+        // 找到根佈局 將焦點從editText改往版面的 rootLayout
+        ConstraintLayout layout = findViewById(R.id.root_layout);
+        layout.setFocusableInTouchMode(true);
+        layout.requestFocus();
+
+        ToggleCountdownController toggleCountdownController = new ToggleCountdownController(ett_timeSave,ctv_releaseTime,btn_timeSaver);
 
         //**獲取當前時間
 //        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Taipei")); //測試用
@@ -304,7 +318,7 @@ public class TimeTask extends AppCompatActivity {
                 new AlertDialog.Builder(TimeTask.this)
                         .setMessage("清除後無法還原")
                         .setNegativeButton("取消",null)
-                        .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                        .setPositiveButton("清除任務內容", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 btn_timeCostSet.setText("預計花費時間");
@@ -317,7 +331,14 @@ public class TimeTask extends AppCompatActivity {
                                 tv_costedTime.setText(null);
                                 new TextWatcher().clearTheInfo(TimeTask.this);
                             }
-                        }).show();
+                        })
+                        .setNeutralButton("清除儲存時間", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                toggleCountdownController.onFinishOutCall();
+                            }
+                        })
+                        .show();
             }
         });
 
@@ -359,6 +380,7 @@ public class TimeTask extends AppCompatActivity {
                         .show();
             }
         });
+
 
     }
 

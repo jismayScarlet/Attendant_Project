@@ -1,6 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraintlayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
+    <ScrollView
+        android:id="@+id/editTextScrollView"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:background="@android:drawable/editbox_background_normal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_confireAndSend">
+
+        <EditText
+            android:id="@+id/et_chatBox"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:backgroundTint="#00FFFFFF"
+            android:hint="送出的訊息"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btn_confireAndSend" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/tv_AIMood"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:background="#27673AB7"
+        android:hint="AI的情緒"
+        app:layout_constraintBottom_toTopOf="@+id/editTextScrollView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/editTextScrollView" />
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:drawable/gallery_thumb"
+        app:layout_constraintBottom_toTopOf="@+id/tv_AIMood"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tv_allMessage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="顯示所有的對話"
+            app:layout_constraintBottom_toTopOf="@+id/tv_AIMood"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tv_AIMood"
+            app:layout_constraintTop_toTopOf="parent" />
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btn_confireAndSend"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:autoSizeTextType="uniform"
+        android:text="確認送出"
+        android:textSize="8sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="120dp"
+        android:layout_height="140dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/editTextScrollView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scrollView"
+        app:layout_constraintVertical_bias="1.0"
+        app:srcCompat="@drawable/default_image" />
 </androidx.constraintlayout.widget.ConstraintLayout>
