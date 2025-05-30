@@ -125,7 +125,8 @@ public class PeriodicTaskHandler {
 
                 view.post(new Runnable() {
                     @Override
-                    public void run() {view.setText("剩餘時間：" + theLessString);}
+                    public void run() {view.setText("剩餘時間：" + theLessString);
+                    }
                 });
 
 
@@ -133,6 +134,7 @@ public class PeriodicTaskHandler {
                 handler.postDelayed(this, INTERVAL);
 
             }
+
         }
     };
 
@@ -149,6 +151,7 @@ public class PeriodicTaskHandler {
                                 @Override
                                 public void run() {
                                     btn_timeCost.setText("＝任務超時＝");
+
                                 }
                             });
 //                            btn_timeCost.setText("＝任務超時＝");
@@ -170,6 +173,7 @@ public class PeriodicTaskHandler {
                                 @Override
                                 public void run() {
                                     btn_timeCost.setText("剩餘不到 1 分鐘");
+
                                 }
                             });
 //                                btn_timeCost.setText("剩餘不到 1 分鐘");
@@ -181,6 +185,7 @@ public class PeriodicTaskHandler {
                                 @Override
                                 public void run() {
                                     btn_timeCost.setText("剩餘 " + (costTimeLess / 60) + " 分鐘");
+
                                 }
                             });
 //                                btn_timeCost.setText("=剩餘 " + (costTimeLess / 60) + " 分鐘=");
@@ -192,6 +197,7 @@ public class PeriodicTaskHandler {
                                     @Override
                                     public void run() {
                                         btn_timeCost.setText("已花費 " + (costTimeSave - (costTimeLess / 60)) + " 分鐘");
+
                                     }
                                 });
 
@@ -213,6 +219,7 @@ public class PeriodicTaskHandler {
             }
             // 再次安排執行，保持週期性運行
             handler2.postDelayed(this, INTERVAL);
+
         }
 
     };

@@ -34,7 +34,6 @@
         <activity android:name=".time_task.DocumentationControl"/>
         <activity android:name=".chatgpt_conectort.AITalkerLayout"/>
         <activity android:name=".chatgpt_conectort.ChatGPTClient"/>
-        <activity android:name=".chatgpt_conectort.ClientFileReader"/>
 
         <receiver android:name=".time_task.AlarmReceiver"
             android:exported="false"/>

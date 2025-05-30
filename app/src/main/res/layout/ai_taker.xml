@@ -22,6 +22,7 @@
             android:layout_height="100dp"
             android:backgroundTint="#00FFFFFF"
             android:hint="送出的訊息"
+            android:textColor="@color/black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btn_confireAndSend" />
     </ScrollView>
@@ -78,4 +79,17 @@
         app:layout_constraintTop_toBottomOf="@+id/scrollView"
         app:layout_constraintVertical_bias="1.0"
         app:srcCompat="@drawable/default_image" />
+
+    <Button
+        android:id="@+id/btn_stopChatAndClear"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="1dp"
+        android:autoSizeTextType="uniform"
+        android:gravity="center"
+        android:text="終止對話"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_confireAndSend"
+        app:layout_constraintEnd_toEndOf="@+id/btn_confireAndSend"
+        app:layout_constraintStart_toStartOf="@+id/btn_confireAndSend" />
 </androidx.constraintlayout.widget.ConstraintLayout>

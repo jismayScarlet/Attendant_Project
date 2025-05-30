@@ -1,7 +1,8 @@
 package com.example.attendant_project.chatgpt_conectort;
 
+import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -9,30 +10,23 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.attendant_project.R;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-
 public class AITalkerLayout extends AppCompatActivity {
-    Context context = this;
+    Context context = AITalkerLayout.this;
     private EditText et_chatBox;
     TextView tv_allMessage;
-    Button btn_confireAndSend;
-    String namePick = "aiChatStram";
+    Button btn_confireAndSend,btn_stopChatAndClear;
+
 
     HandlerThread AITalkerThread = new HandlerThread("AITalkerThread");//創建一個副thread
     private Handler handler;
@@ -40,7 +34,7 @@ public class AITalkerLayout extends AppCompatActivity {
     private Runnable inputFinishedRunnable;
     ScrollView scrollView;
     private String roleDate;
-    int requestcode = 1;
+
 
 
     @Override
@@ -50,6 +44,7 @@ public class AITalkerLayout extends AppCompatActivity {
         et_chatBox = findViewById(R.id.et_chatBox);
         tv_allMessage = findViewById(R.id.tv_allMessage);
         btn_confireAndSend = findViewById(R.id.btn_confireAndSend);
+        btn_stopChatAndClear = findViewById(R.id.btn_stopChatAndClear);
         findViewById(R.id.constraintlayout).requestFocus();
         scrollView = findViewById(R.id.scrollView);
 
@@ -59,13 +54,21 @@ public class AITalkerLayout extends AppCompatActivity {
         handler.post(inputFinishedRunnable);
         handler2.post(checkGPTRespone);
 
-        Intent getSystemRoleSet = new Intent(this, ClientFileReader.class);
-        startActivityForResult(getSystemRoleSet,requestcode);
+
+        roleDate = new ClientFileReader().getChatMemery(AITalkerLayout.this);
+        tv_allMessage.setText(new ClientFileReader().readTextFromFile(AITalkerLayout.this));Log.d("talker box", "過往紀錄初始完畢");
 
         chatBoxChangeWatcher();
-        readTextFromFile();Log.d("talker box", "過往紀錄初始完畢");
-        messageSendButton();
 
+
+        chatBoxPushDownEnterKey();
+        messageSendButton();
+        stopAndClearChat();
+
+        scrollView.post(() -> {
+            scrollView.smoothScrollTo(0, tv_allMessage.getBottom());
+            Log.d("scroll","success");
+        });
     }
 
     @Override
@@ -75,16 +78,8 @@ public class AITalkerLayout extends AppCompatActivity {
         AITalkerThread.quitSafely();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == requestcode && resultCode == RESULT_OK) {
-            if (data != null) {
-                roleDate = data.getStringExtra("roleDate");
-                ChatGPTClient.callChatGPTSetSystemRole(roleDate);
-            }
-        }
-    }
+
+
 
     private void chatBoxChangeWatcher() {
         tv_allMessage.addTextChangedListener(new TextWatcher() {
@@ -100,7 +95,7 @@ public class AITalkerLayout extends AppCompatActivity {
                     handler.removeCallbacks(inputFinishedRunnable);
                 }
                 inputFinishedRunnable = () -> {
-                    saveTextToFile(context, namePick, s.toString());
+                    new ClientFileReader().saveTextToFile(context, s.toString());
 //                    Log.d("Talker box", "輸入完成: " + s.toString() + "\n");
 
                 };
@@ -108,6 +103,42 @@ public class AITalkerLayout extends AppCompatActivity {
             }
         });
     }
+
+
+
+    //////送出訊息
+    private void chatBoxPushDownEnterKey(){
+        et_chatBox.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                    messageSendRule();
+                    Log.d("Key", "按下 Enter 鍵");
+                    return true; // 表示已處理事件，不再冒泡
+                }
+            }
+            return false;
+        });
+    }
+    private void messageSendButton(){
+        btn_confireAndSend.setOnClickListener(new View.OnClickListener() {
+            String message;
+            @Override
+            public void onClick(View v) {
+                messageSendRule();
+            }
+        });
+    }
+
+    private void messageSendRule(){//傳送訊息的規則
+        String message;
+        tv_allMessage.append( "我： " + et_chatBox.getText() + "\n");
+        message = String.valueOf(et_chatBox.getText());
+        ChatGPTClient.sendMessage(AITalkerLayout.this,message, roleDate);//簡易帶有system的訊息傳送函數}
+        et_chatBox.setText(null);
+    }
+
+
+    //////送出訊息
 
     String lastString = "0",nowString = "1";
     private Runnable checkGPTRespone = new Runnable() {
@@ -121,63 +152,47 @@ public class AITalkerLayout extends AppCompatActivity {
                     uiHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            tv_allMessage.append("助手： " + nowString + "\n");
+                            tv_allMessage.append("助手： " + nowString + "\n \n");
                         }
                     });
                     lastString = nowString;
 
                     // 延遲執行以等候 TextView 完成排版
                     // 滑動到底位置
-                    scrollView.post(() -> {
+
+                    scrollView.postDelayed(() -> {
                     scrollView.smoothScrollTo(0, tv_allMessage.getBottom());
                     Log.d("scroll","success");
-                    });
+                    },500);
                 }
             }
          handler.postDelayed(this,1000);
         }
     };
 
-    private void messageSendButton(){
-        btn_confireAndSend.setOnClickListener(new View.OnClickListener() {
-            String message;
+
+    private void stopAndClearChat(){
+        btn_stopChatAndClear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                tv_allMessage.append( "我： " + et_chatBox.getText() + "\n");
-                message = String.valueOf(et_chatBox.getText());
-                ChatGPTClient.callChatGPTInBackground(message);
-                et_chatBox.setText(null);
+                new AlertDialog.Builder(AITalkerLayout.this)
+                        .setTitle("終止並清除現在的話題")
+                        .setMessage("將無法復原，你確定嗎?")
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                tv_allMessage.setText("");
+                                ChatGPTClient.setChatRound(0);
+                                //中止內容的繼續引用
+                            }
+                        }).show();
             }
         });
     }
 
 
 
-    private void saveTextToFile(Context context, String fileName, String content) {
-        try (FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE)) {
-            fos.write(content.getBytes(StandardCharsets.UTF_8));
-            fos.flush();
-        } catch (IOException e) {
-            Log.e("儲存", "儲存檔案失敗: " + e.getMessage());
-        }
-    }
 
-    private void readTextFromFile() {//開啟軟體時讀取字串
-        if ( tv_allMessage == null) {
-            Log.e("儲存", "無效的索引或 TextInputEditText 陣列");
-            return;
-        }
-        StringBuilder builder = new StringBuilder();
-        try (FileInputStream fis = context.openFileInput(namePick);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line).append("\n");
-            }
-        } catch (IOException e) {
-            Log.e("儲存", "讀取檔案失敗: " + e.getMessage());
-        }
-        tv_allMessage.setText(builder.toString());
-    }
 
 }

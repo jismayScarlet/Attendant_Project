@@ -1,5 +1,6 @@
 package com.example.attendant_project.time_task;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
@@ -15,7 +16,6 @@ import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -419,9 +419,13 @@ public class TimeTask extends AppCompatActivity {
                 uriSet = data.getData();
                 PrefsManager.putMusicSet(getApplicationContext(),"customization_music",uriSet.toString());
                 // 取得並保留 URI 存取權限
+                @SuppressLint("WrongConstant")
                 final int takeFlags = data.getFlags() &
                         (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);//取得久持權限
                 TimeTask.this.getContentResolver().takePersistableUriPermission(uriSet, takeFlags);
+
+
+
                 Log.i("setMusic uri", uriSet.toString());
             } else {
                 tv_ringtone1.setText("鈴聲設定失敗!");
