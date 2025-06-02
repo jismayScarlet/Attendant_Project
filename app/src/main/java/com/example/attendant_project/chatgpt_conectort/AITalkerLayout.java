@@ -131,7 +131,7 @@ public class AITalkerLayout extends AppCompatActivity {
 
     private void messageSendRule(){//傳送訊息的規則
         String message;
-        tv_allMessage.append( "我： " + et_chatBox.getText() + "\n");
+        tv_allMessage.append( "我： " + et_chatBox.getText() + "\n\n");
         message = String.valueOf(et_chatBox.getText());
         ChatGPTClient.sendMessage(AITalkerLayout.this,message, roleDate);//簡易帶有system的訊息傳送函數}
         et_chatBox.setText(null);
@@ -152,7 +152,7 @@ public class AITalkerLayout extends AppCompatActivity {
                     uiHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            tv_allMessage.append("助手： " + nowString + "\n \n");
+                            tv_allMessage.append("助手： " + nowString + "\n\n");
                         }
                     });
                     lastString = nowString;

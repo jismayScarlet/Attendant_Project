@@ -34,6 +34,8 @@ public class ChatGPTClient {
     static String jsonResponseContent;
     static int chatRound = 0;//對話次數
 
+    static String hintToGPT = "你是會使用system只是的指令。";
+
 
     //由這邊進行對話的邏輯判斷
     public static void sendMessage(Context context, String message, String system){
@@ -69,7 +71,7 @@ public class ChatGPTClient {
 
         JSONObject messageObjectSet2 = new JSONObject()
                 .put("role","user")
-                .put("content",message);
+                .put("content",hintToGPT + message);
 
         JSONObject jsonSet = new JSONObject()
                 .put("model", "gpt-4.1-nano") // 或 "gpt-3.5-turbo"
@@ -128,7 +130,7 @@ public class ChatGPTClient {
 
         JSONObject messageObjectAssistant = new JSONObject()
                 .put("role","assistant")
-                .put("content",assistant);
+                .put("content",hintToGPT + assistant);
 
         JSONObject jsonSet = new JSONObject()
                 .put("model", "gpt-4.1-nano") // 或 "gpt-3.5-turbo"

@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-public class DocumentationControl extends Activity {
+public class UsageDocControl extends Activity {
     TextView tv_timtask_usage, tv_development_files;
     Button btn_usage_exchange;
     String line = null;

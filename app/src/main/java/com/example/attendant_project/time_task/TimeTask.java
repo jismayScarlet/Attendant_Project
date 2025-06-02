@@ -307,7 +307,7 @@ public class TimeTask extends AppCompatActivity {
         btn_usage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(TimeTask.this,DocumentationControl.class);
+                Intent intent = new Intent(TimeTask.this, UsageDocControl.class);
                 startActivity(intent);
             }
         });
