@@ -12,18 +12,21 @@
         android:id="@+id/editTextScrollView"
         android:layout_width="0dp"
         android:layout_height="100dp"
+        android:autofillHints="按下enter鍵送出"
         android:background="@android:drawable/editbox_background_normal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_confireAndSend"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintBottom_toTopOf="@+id/btn_stopChatAndClear"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/imageButton">
 
         <EditText
             android:id="@+id/et_chatBox"
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:backgroundTint="#00FFFFFF"
-            android:hint="送出的訊息"
+            android:hint="按下enter鍵送出"
             android:textColor="@color/black"
+            android:tooltipText="按下enter鍵送出"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btn_confireAndSend" />
     </ScrollView>
@@ -36,6 +39,7 @@
         android:hint="AI的情緒"
         app:layout_constraintBottom_toTopOf="@+id/editTextScrollView"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/imageButton" />
 
     <ScrollView
@@ -75,7 +79,7 @@
         android:layout_width="120dp"
         android:layout_height="140dp"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/editTextScrollView"
+        app:layout_constraintBottom_toTopOf="@+id/btn_stopChatAndClear"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/default_image" />
 

@@ -33,14 +33,14 @@ public class AITalkerLayout extends AppCompatActivity {
     private Handler handler2;
     private Runnable inputFinishedRunnable;
     ScrollView scrollView;
-    private String roleDate;
+
 
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.ai_taker);
+        setContentView(R.layout.llm_talker_layout);
         et_chatBox = findViewById(R.id.et_chatBox);
         tv_allMessage = findViewById(R.id.tv_allMessage);
         btn_confireAndSend = findViewById(R.id.btn_confireAndSend);
@@ -55,8 +55,7 @@ public class AITalkerLayout extends AppCompatActivity {
         handler2.post(checkGPTRespone);
 
 
-        roleDate = new ClientFileReader().getChatMemery(AITalkerLayout.this);
-        tv_allMessage.setText(new ClientFileReader().readTextFromFile(AITalkerLayout.this));Log.d("talker box", "過往紀錄初始完畢");
+        tv_allMessage.setText(new ClientFileIO().readTextFromFile(AITalkerLayout.this));Log.d("talker box", "過往紀錄初始完畢");
 
         chatBoxChangeWatcher();
 
@@ -95,7 +94,7 @@ public class AITalkerLayout extends AppCompatActivity {
                     handler.removeCallbacks(inputFinishedRunnable);
                 }
                 inputFinishedRunnable = () -> {
-                    new ClientFileReader().saveTextToFile(context, s.toString());
+                    new ClientFileIO().saveTextToFile(context, s.toString());
 //                    Log.d("Talker box", "輸入完成: " + s.toString() + "\n");
 
                 };
@@ -111,7 +110,7 @@ public class AITalkerLayout extends AppCompatActivity {
         et_chatBox.setOnKeyListener((v, keyCode, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
-                    messageSendRule();
+                    messageSend();
                     Log.d("Key", "按下 Enter 鍵");
                     return true; // 表示已處理事件，不再冒泡
                 }
@@ -124,16 +123,16 @@ public class AITalkerLayout extends AppCompatActivity {
             String message;
             @Override
             public void onClick(View v) {
-                messageSendRule();
+                messageSend();
             }
         });
     }
 
-    private void messageSendRule(){//傳送訊息的規則
+    private void messageSend(){//統一呼叫傳輸方法
         String message;
-        tv_allMessage.append( "我： " + et_chatBox.getText() + "\n\n");
         message = String.valueOf(et_chatBox.getText());
-        ChatGPTClient.sendMessage(AITalkerLayout.this,message, roleDate);//簡易帶有system的訊息傳送函數}
+        tv_allMessage.append( "マスター：" + et_chatBox.getText() + "\n\n");//冠名 マスター：、結月ゆかり： 被鎖定，更改會影響到ClientFileReader取資料
+        ChatGPTClient.sendMessage(AITalkerLayout.this,message);
         et_chatBox.setText(null);
     }
 
@@ -147,12 +146,12 @@ public class AITalkerLayout extends AppCompatActivity {
             if (ChatGPTClient.getResponed() != null) {
                 nowString = ChatGPTClient.getResponed();
                 if (!lastString.equals(nowString) ) {
-                    Log.d("GPT Response","at Thread response = " + nowString + " " + lastString);
+                    Log.d("GPT Response","at Thread response now=" + nowString + ",last=" + lastString);
                     Handler uiHandler = new Handler(Looper.getMainLooper());//丟回UI Thread
                     uiHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            tv_allMessage.append("助手： " + nowString + "\n\n");
+                            tv_allMessage.append("結月ゆかり：" + nowString + "\n\n");
                         }
                     });
                     lastString = nowString;
@@ -182,8 +181,7 @@ public class AITalkerLayout extends AppCompatActivity {
                         .setPositiveButton("確定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                tv_allMessage.setText("");
-                                ChatGPTClient.setChatRound(0);
+                                tv_allMessage.setText(null);
                                 //中止內容的繼續引用
                             }
                         }).show();

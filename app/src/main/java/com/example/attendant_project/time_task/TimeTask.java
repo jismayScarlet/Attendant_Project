@@ -65,7 +65,7 @@ public class TimeTask extends AppCompatActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.task_time_left);
+        setContentView(R.layout.timetask_layout);
         tv_timeNow = findViewById(R.id.tv_current_time);
         tv_target_time = findViewById(R.id.tv_target_time);
         btn_timeSet = findViewById(R.id.btn_set_time);
@@ -300,7 +300,6 @@ public class TimeTask extends AppCompatActivity {
                     Intent outPutIntent = new Intent(TimeTask.this,TextControler.class);//建立並啟動存檔
                     outPutIntent.putExtra("TIME_INFO",textWatcher.getTimeInfo());
                     startActivity(outPutIntent);
-                    Toast.makeText(TimeTask.this, "任務內容完成儲存", Toast.LENGTH_LONG).show();
             }
         });
 

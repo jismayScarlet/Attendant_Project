@@ -4,6 +4,7 @@ import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
 import android.app.Activity;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -30,16 +31,20 @@ public class UsageDocControl extends Activity {
         tv_development_files = findViewById(R.id.tv_development_files);
         btn_usage_exchange = findViewById(R.id.btn_usage_exchange);
 
-        String inputString = fileReader(R.raw.timtask_usage);
-        tv_timtask_usage.setText(inputString);
+
+        try {
+            String inputString = fileReader("data/timtask_usage.txt");
+            tv_timtask_usage.setText(inputString);
 //        Log.e("說明文件", "imtask_usage 長度 " + inputString.length());
 //        tv_timtask_usage.setHeight(dpToPx(this,600 + (inputString.length()/600)));
 
-        inputString = fileReader(R.raw.development_files);
-        tv_development_files.setText(inputString);
+            inputString = fileReader("data/development_files.txt");
+            tv_development_files.setText(inputString);
 //        Log.e("說明文件", "development_files 長度 " + inputString.length());
 //        tv_development_files.setHeight(dpToPx(this,600 + (inputString.length()/600)));
-
+        }catch (IOException e){
+            throw new RuntimeException("說明文件讀取失敗");
+        }
 
         btn_usage_exchange.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,8 +62,9 @@ public class UsageDocControl extends Activity {
         });
     }
 
-    private String fileReader(int resId) {
-        InputStream inputStream = getResources().openRawResource(resId);
+    private String fileReader(String resId) throws IOException {
+        AssetManager assetManager = getApplicationContext().getAssets();
+        InputStream inputStream = assetManager.open(resId);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
         StringBuilder content = new StringBuilder();
 
