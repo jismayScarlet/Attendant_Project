@@ -18,7 +18,6 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class ChatGPTClient {
 // API name:firstYukari
@@ -33,6 +32,7 @@ public class ChatGPTClient {
 
     private static final OkHttpClient client = new OkHttpClient();
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+    static JsonMessageTool JMT = new JsonMessageTool();
     static String jsonResponseContent;
 //    private static Map<Integer,String> roleContent;
 //    private static Objects[] roleContentList = new Objects[2000];
@@ -108,21 +108,8 @@ public class ChatGPTClient {
                 .header("Authorization", "Bearer " + API_KEY)
                 .post(bodySet)
                 .build();
-        String responseBody = null;
-        try (Response responseSet = client.newCall(requestSet).execute()) {
-            if (!responseSet.isSuccessful()) {
-                Log.d("GPT post","Error: " + responseSet.code() + " - " + responseBody );
-            }else if(responseSet.isSuccessful()){
-                responseBody = responseSet.body().string();
-                Log.i("GPT post","角色設定推送成功");
-            }
-        }
 
-//        String responseBody = responseSet.body().string();
-        JSONObject jsonResponse = new JSONObject(responseBody);
-        JSONArray choices = jsonResponse.getJSONArray("choices");
-        JSONObject firstChoice = choices.getJSONObject(0);
-        JSONObject messageResponse = firstChoice.getJSONObject("message");
+        JSONObject messageResponse = JMT.jsonDefaultPostAndResponse(requestSet,client);
         String content;
         if (messageResponse.has("content")) {
             content = messageResponse.getString("content");
@@ -132,7 +119,6 @@ public class ChatGPTClient {
 
         Log.i("GPT Response","final content: " + content);
         Log.i("GPT post","In Object \n" + jsonSet);
-        Log.i("GPT Response","origin response\n" + responseBody);
 
         return content;
     }
@@ -147,7 +133,7 @@ public class ChatGPTClient {
             Log.w("GPT post", "system prompt 為 null，套用預設值");
         }
 
-        JsonMessageTool JMT = new JsonMessageTool();
+
         JSONArray messageArray = new JSONArray()
                 .put(JMT.systemObject(system));
         int i = 0;
@@ -172,7 +158,14 @@ public class ChatGPTClient {
             }
         }
 
-        JSONArray toolsArray = new JSONArray().put(JMT.catchMoodTool("catchMasterMood"));
+        String[] p_TCN = {"mood","contextOfMood"};
+        String[] p_TCD = {"使用者的心情","情緒發生的情境"};
+        JSONArray toolsArray = new JSONArray()
+                .put(
+                        JMT.GPTTools("catchMasterMood"
+                                ,"當使用者有明確的情緒時抓住使用者表達了的情緒，限定從＂快樂、悲傷、恐懼、憤怒、厭惡、、平靜＂之中做出分類"
+                                , p_TCN, p_TCD)
+                );
 
         JSONObject jsonSet = new JSONObject()
                 .put("model", "gpt-4.1-nano") // 或 "gpt-3.5-turbo"
@@ -194,21 +187,7 @@ public class ChatGPTClient {
                 .post(bodySet)
                 .build();
 
-        //解析回傳
-        String responseBody = null;
-        try (Response responseSet = client.newCall(requestSet).execute()) {
-            if (!responseSet.isSuccessful()) {
-                Log.d("GPT post","Error: " + responseSet.code() + " - " + responseBody );
-            }else if(responseSet.isSuccessful()){
-                responseBody = responseSet.body().string();
-                Log.i("GPT post","初始角色設定推送成功");
-            }
-        }
-
-        JSONObject jsonResponse = new JSONObject(responseBody);
-        JSONArray choices = jsonResponse.getJSONArray("choices");
-        JSONObject firstChoice = choices.getJSONObject(0);
-        JSONObject messageResponse = firstChoice.getJSONObject("message");
+        JSONObject messageResponse = JMT.jsonDefaultPostAndResponse(requestSet,client);
 
         String content = null;String userMood;String moodContext;String resId;
 
@@ -250,7 +229,6 @@ public class ChatGPTClient {
 
         Log.i("GPT Response","continueChat content: " + content);
         Log.i("GPT post","In Object \n" + jsonSet);
-        Log.i("GPT Response","origin response\n" + responseBody);
 
         lastContent = content;
         return content;
@@ -297,21 +275,8 @@ public class ChatGPTClient {
                 .header("Authorization", "Bearer " + API_KEY)
                 .post(bodySet)
                 .build();
-        String responseBody = null;
-        try (Response responseSet = client.newCall(requestSet).execute()) {
-            if (!responseSet.isSuccessful()) {
-//                Log.d("GPT post","Error: " + responseSet.code() + " - " + responseBody );
-                throw new JSONException("Error: " + responseSet.code() + " - " + responseBody) ;
-            }else if(responseSet.isSuccessful()){
-                responseBody = responseSet.body().string();
-                Log.i("GPT post","初始角色設定推送成功");
-            }
-        }
 
-        JSONObject jsonResponse = new JSONObject(responseBody);
-        JSONArray choices = jsonResponse.getJSONArray("choices");
-        JSONObject firstChoice = choices.getJSONObject(0);
-        JSONObject messageResponse = firstChoice.getJSONObject("message");
+        JSONObject messageResponse = JMT.jsonDefaultPostAndResponse(requestSet,client);
         String content;
         if (messageResponse.has("content")) {
             content = messageResponse.getString("content");
@@ -322,7 +287,6 @@ public class ChatGPTClient {
         }
 
         Log.i("GPT Response","mixed tool content: " + content);
-        Log.i("GPT Response","origin response\n" + responseBody);
         Log.i("GPT post","In Object In tool\n" + jsonSet);
         Log.i("chat state","tool feedback");
         return content;
@@ -330,24 +294,7 @@ public class ChatGPTClient {
 
 
 
-    private static JSONObject jsonDefaultPostAndResponse(Request request) throws JSONException {
-        String responseBody = null;
-        try (Response responseSet = client.newCall(request).execute()) {
-            if (!responseSet.isSuccessful()) {
-                Log.d("GPT post","Error: " + responseSet.code() + " - " + responseBody );
-            }else if(responseSet.isSuccessful()){
-                responseBody = responseSet.body().string();
-                Log.i("GPT post","初始角色設定推送成功");
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
-        JSONObject jsonResponse = new JSONObject(responseBody);
-        JSONArray choices = jsonResponse.getJSONArray("choices");
-        JSONObject firstChoice = choices.getJSONObject(0);
-        return firstChoice.getJSONObject("message");
-    }
 
     static public String getResponed(){
 
