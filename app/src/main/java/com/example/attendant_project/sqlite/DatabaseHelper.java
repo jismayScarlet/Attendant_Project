@@ -3,76 +3,170 @@ package com.example.attendant_project.sqlite;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Stack;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-    private static final String DATABASE_NAME = "GPTMemery.db";
+    private static final String DATABASE_NAME = "GPTMemeryDatabase.db";
     private static final int DATABASE_VERSION = 1;
+    private static String memoryTitle,memoryDetail;
+    private Context context;
 
-    public DatabaseHelper(Context context) {
+    public DatabaseHelper(Context context,String memoryTitle,String memoryDetail){
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
+        this.memoryTitle = memoryTitle;
+        this.memoryDetail = memoryDetail;
+    }
+
+    public DatabaseHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createTableSQL = "CREATE TABLE users (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT, " +
-                "email TEXT)";
-        db.execSQL(createTableSQL);
+        if(memoryTitle != null && !doesTableExist(db,memoryTitle)) {
+            String createTableSQL =
+                    "CREATE TABLE " + memoryTitle + " (" +
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                            "memoryDetail TEXT default " + memoryDetail + ")";
+            db.execSQL(createTableSQL);
+        }
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // 升級資料表時使用，例如加入新欄位
-        db.execSQL("DROP TABLE IF EXISTS users");
+        db.execSQL("DROP TABLE IF EXISTS GPTmemery");
         onCreate(db);
     }
 
-    public void insertUser(String name, String email) {
+    
+    public void creatNewMemery(String memoryTitle,String memoryDetail){
         SQLiteDatabase db = getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("name", name);
-        values.put("email", email);
-        db.insert("users", null, values);
+        if(memoryTitle != null && !doesTableExist(db,memoryTitle)) {
+            String createTableSQL =
+                    "CREATE TABLE " + memoryTitle + " (" +
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                            "memoryDetail TEXT default " + memoryDetail + ")";
+            db.execSQL(createTableSQL);
+        } else if (memoryTitle != null && doesTableExist(db,memoryTitle) && memoryDetail != null) {
+            String memoryDetailSearch =
+                    "SELECT 1 FROM " + memoryTitle + " WHERE memoryDetail = ? LIMIT 1";
+            Cursor cursor = db.rawQuery(memoryDetailSearch,new String[]{memoryDetail});
+            if(!cursor.moveToFirst()){
+                insertDateTime(memoryTitle,memoryDetail);
+            }
+
+        }
         db.close();
     }
 
-    public List<String> getAllUsers() {
-        List<String> users = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM users", null);
+    private void insertDateTime(String memoryTitle,String memoryDetail) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        if(doesTableExist(db,memoryTitle)){
+            values.put("memoryDetail", memoryDetail);
+            db.insert(memoryTitle, null, values);
+        }
+        db.close();
+    }
 
+    private boolean doesTableExist(SQLiteDatabase db, String memoryTitle) {
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                new String[]{memoryTitle}
+        );//統計
+        boolean exists = false;
         if (cursor.moveToFirst()) {
-            do {
-                String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-                String email = cursor.getString(cursor.getColumnIndexOrThrow("email"));
-                users.add(name + " (" + email + ")");
-            } while (cursor.moveToNext());
+            exists = cursor.getInt(0) > 0;
         }
         cursor.close();
-        db.close();
-        return users;
+        return exists;
     }
 
-    public void updateUser(int id, String name, String email) {
-        SQLiteDatabase db = getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("name", name);
-        values.put("email", email);
-        db.update("users", values, "id = ?", new String[]{String.valueOf(id)});
+    public Stack<String> doedTableExist(String memoryTitle){
+        Stack<String> tableNames = new Stack<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?",
+                new String[]{"%" + memoryTitle + "%"});
+        cursor.moveToFirst();
+        while (cursor.moveToNext()) {
+            tableNames.push(cursor.getString(0));
+        }
         db.close();
+        return  tableNames;
     }
 
-    public void deleteUser(int id) {
-        SQLiteDatabase db = getWritableDatabase();
-        db.delete("users", "id = ?", new String[]{String.valueOf(id)});
+    public Stack<String> chackMemeryDetail(String memoryTitle,String memoryDetail){
+        SQLiteDatabase db = getReadableDatabase();
+        Stack<String> memoryDetails = new Stack<>();
+        Cursor cursor = db.rawQuery(
+                "SELECT memoryDetail FROM " + memoryTitle + "AND memoryDetail LIKE ?",
+                new String[]{"%" + memoryDetail + "%"}
+        );
+        while (cursor.moveToNext()){
+            memoryDetails.push(cursor.getString(0));
+        }
         db.close();
+        return memoryDetails;
     }
+
+    public boolean deleteMemery(String memoryTitle) {
+        try {
+        SQLiteDatabase db = getWritableDatabase();
+        String deletTable =
+                "DROP TABLE " + memoryTitle ;
+            db.execSQL(deletTable);
+            db.close();
+        }catch (SQLException e){
+            return false;
+        }
+        return true;
+    }
+
+    public boolean destroyDataBase(){
+        boolean deleted = context.deleteDatabase("GPTMemeryDatabase.db");
+        return deleted;
+    }
+
+
+
+//    public void updateUser(String memoryTitle , String memoryDetail) {
+//        SQLiteDatabase db = getWritableDatabase();
+//        ContentValues values = new ContentValues();
+//        values.put("memoryDetail", memoryDetail);
+//        db.update(memoryTitle, values);
+//        db.close();
+//    }
+
+//    public void changeColumn(){//修改欄位
+//        SQLiteDatabase db = getWritableDatabase();
+//        // 1. 建立新的表（不含職稱欄位）
+//        db.execSQL("""
+//            CREATE TABLE GPTmemeryNew (
+//                id INTEGER PRIMARY KEY,
+//                memery TEXT,
+//                datetime TEXT
+//            );
+//        """);
+//
+//        // 2. 搬資料
+//        db.execSQL("""
+//            INSERT INTO GPTmemeryNew (id,memery,datetime)
+//            SELECT id,memery,datetime FROM GPTmemery;
+//        """);
+//
+//        // 3. 刪除舊表
+//        db.execSQL("DROP TABLE GPTmemery;");
+//
+//        // 4. 重新命名
+//        db.execSQL("ALTER TABLE GPTmemeryNew RENAME TO GPTmemery;");
+//    }
 
 
 }
