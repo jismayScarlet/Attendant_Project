@@ -77,5 +77,24 @@ public class ChatGPTClient {
 //        return content;
 //    }
 
+//            JSONArray toolCalls = messageResponse.getJSONArray("tool_calls");
+//            JSONObject toolCall = toolCalls.getJSONObject(0);
+//            resId = toolCall.getString("id");
+//            for (int j = 0; j < toolCalls.length(); j++) {
+//                JSONObject function = toolCalls.getJSONObject(j).getJSONObject("function");
+//                if (function.has("arguments")) {
+//                    JSONObject args = new JSONObject(function.getString("arguments"));
+//                    userMood = args.getString("mood");//抓到使用者的情緒
+//                    moodContext = args.getString("contextOfMood");//抓到情緒發生的情境
+//                    GPTMemoryTool catchGPTTool = new GPTMemoryTool(contextFrom);
+//                    catchGPTTool.saveMoodContext(userMood,moodContext);
+//                    String Countermeasures = catchGPTTool.loadMoodContent(userMood);
+//                    content = toolsFeedBack_ofMoodContext("使用者的情緒" + userMood + "發生的環境" + moodContext,resId,"使用者發生" + userMood + "情緒的時候，我應該參考後面這些活動來改變使用者的情緒:" + Countermeasures);
+//                    Log.i("user mood", "使用者的情緒 " + userMood + "，發生的情境 " + moodContext);
+//                } else if (!function.has("arguments")) {
+//                    content = "...";
+//                }
+//            }
+
 
 }

@@ -8,7 +8,7 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.attendant_project.chatgpt_conectort.AITalkerLayout;
-import com.example.attendant_project.time_task.TimeTask;
+import com.example.attendant_project.time_task.TimeTaskLayout;
 
 public class MainActivity extends AppCompatActivity {
     Button btn_attendant,btn_ai_talker;
@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //啟動task_timeLeft邏輯群
-                Intent timeTaskIntent =new Intent(MainActivity.this, TimeTask.class);
+                Intent timeTaskIntent =new Intent(MainActivity.this, TimeTaskLayout.class);
                 startActivity(timeTaskIntent);
                 //task_timeLeft邏輯群
             }

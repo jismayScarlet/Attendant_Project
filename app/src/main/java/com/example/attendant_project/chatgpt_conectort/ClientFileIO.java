@@ -1,14 +1,13 @@
 package com.example.attendant_project.chatgpt_conectort;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
+import android.content.SharedPreferences;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.attendant_project.R;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,7 +21,8 @@ public class ClientFileIO {
     String line = null;
     private final String fileName = "aiChatStram";//當前對話紀錄
     private String resolut = null;
-
+    private int wordsLimit = 10000,wordsDelet = 200;
+// 訊息超過 10000，刪除最前面 500 個字符，理想上是呼叫GPT自己整理一下內容再放回去
 
 
     public String getRoleSet(Context context){
@@ -52,11 +52,10 @@ public class ClientFileIO {
 
     public void saveTextToFile(Context context, String content) {
         try (FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE)) {
-            if(content.length() > 2000){
+            if(content.length() > wordsLimit){
                 StringBuilder builder = new StringBuilder(content);
-                builder.delete(0,Math.min(100,builder.length()));
+                builder.delete(0,Math.min(wordsDelet,builder.length()));
                 content = builder.toString();
-                Toast.makeText(context,"聊天紀錄上限2000字",Toast.LENGTH_LONG);
             }
             fos.write(content.getBytes(StandardCharsets.UTF_8));
             fos.flush();
@@ -65,13 +64,21 @@ public class ClientFileIO {
         }
     }
 
-    public void saveTextToFile(Context context, String fileName,String oraginContent,String appendContent) {
+    public void saveTextToFile(Context context, String content,String fileName) {
+        try (FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE)) {
+            fos.write(content.getBytes(StandardCharsets.UTF_8));
+            fos.flush();
+        } catch (IOException e) {
+            Log.e("儲存", "儲存檔案失敗: " + e.getMessage());
+        }
+    }
+
+    public void saveTextToFile(Context context, String fileName, StringBuilder oraginContent, String appendContent,int wordsLimit,int wordsDelet) {
         try{
             FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
-            StringBuilder builder = new StringBuilder(oraginContent);
-            if (builder.length() > 5000) {
-                // 訊息超過 5000，刪除最前面 500 個字符，理想上是呼叫GPT自己整理一下內容再放回去
-                builder.delete(0, Math.min(500, builder.length()));
+            StringBuilder builder = oraginContent;
+            if (builder.length() > wordsLimit) {
+                builder.delete(0, Math.min(wordsDelet, builder.length()));
             }
             String finishContent = String.valueOf(builder.append(appendContent).append("\n"));
             fos.write(finishContent.getBytes(StandardCharsets.UTF_8));
@@ -124,22 +131,42 @@ public class ClientFileIO {
         }
 
         // 判斷是否超過 2000 個 token（假設每個 UTF-16 字元當作一個 token）
-        if (builder.length() > 2000) {
-            Handler uiHandler = new Handler(Looper.getMainLooper());//丟回UI Thread
-            uiHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(context, "聊天紀錄上限2000字",Toast.LENGTH_LONG);
-                }
-            });
-
-            // 刪除最前面 100 個字符
-            builder.delete(0, Math.min(100, builder.length()));
-        }
+//        if (builder.length() > 2000) {
+//            Handler uiHandler = new Handler(Looper.getMainLooper());//丟回UI Thread
+//            uiHandler.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(context, "聊天紀錄上限2000字",Toast.LENGTH_LONG);
+//                }
+//            });
+//
+//            // 刪除最前面 100 個字符
+//            builder.delete(0, Math.min(100, builder.length()));
+//        }
         return builder.toString();
     }
 
-    public String readTextFromFile(Context context,String fileName) {
+    public String readTextFromFile(Context context,String fileName) {//讀取檔案字串
+        StringBuilder builder = new StringBuilder();
+        try (FileInputStream fis = context.openFileInput(fileName);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line).append("\n");
+            }
+        }catch (NullPointerException e){
+            Log.e("儲存", "找不到檔案: " + e.getMessage());
+            return null;
+        } catch (IOException e) {
+            Log.e("儲存", "讀取檔案失敗: " + e.getMessage());
+            return null;
+        }
+
+        // 判斷是否超過 2000 個 token（假設每個 UTF-16 字元當作一個 token）
+        return builder.toString();
+    }
+
+    public StringBuilder readTextFromFileToStringBuulder(Context context,String fileName) {//讀取檔案字串
         StringBuilder builder = new StringBuilder();
         try (FileInputStream fis = context.openFileInput(fileName);
              BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
@@ -152,34 +179,57 @@ public class ClientFileIO {
         }
 
         // 判斷是否超過 2000 個 token（假設每個 UTF-16 字元當作一個 token）
-        return builder.toString();
+        return builder;
     }
 
-    public Map readTextFromFileForPost(Context context) {
+    public Map readTextFromFileForPost(Context context,String nickname) {
         String line;int userMessageN = 0,assistantN = 0;
         String[] userMessage = new String[250],assistant = new String[250];
         //總字數限制2000(建立在chatLog字數限制規則上)，假設每行10個字就也100行
 
+
         try (FileInputStream fis = context.openFileInput(fileName);
              BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
-            int counter = 0;
+            //向前對齊對話 版本
+//            while ((line = reader.readLine()) != null) {
+//                //reader.readLine()從前面開始讀file
+//                String[] part = line.split("マスター：",2);//切成兩行
+//                if(part.length < 2){//沒有找到字串導致
+//                    String word = nickname+"：";
+//                    part = line.split( word,2);
+//
+//                    if(part.length < 2){
+//                     Log.i("file IO","RFP read blank");
+//                     continue;
+//                    }  else{
+//                        assistant[assistantN] = part[1];
+//                        assistantN += 1;
+//                    }
+//                }else {
+//                    userMessage[userMessageN] = part[1];
+//                    userMessageN += 1;
+//                }
+//            }
+
+            //允許對話跳躍 版本
+            int uniformValue = 0;
             while ((line = reader.readLine()) != null) {
                 //reader.readLine()從前面開始讀file
                 String[] part = line.split("マスター：",2);//切成兩行
                 if(part.length < 2){//沒有找到字串導致
-                    part = line.split("結月ゆかり：",2);
+                    String word = nickname+"：";
+                    part = line.split( word,2);
 
                     if(part.length < 2){
-                     Log.i("file IO","RFP read blank");
-                     continue;
+                        Log.i("file IO","RFP read blank");
+                        continue;
                     }  else{
-                        assistant[assistantN] = part[1];
-                        assistantN += 1;
+                        assistant[uniformValue] = part[1];
                     }
                 }else {
-                    userMessage[userMessageN] = part[1];
-                    userMessageN += 1;
+                    userMessage[uniformValue] = part[1];
                 }
+                uniformValue += 1;
             }
 
         } catch (IOException e) {
@@ -194,8 +244,30 @@ public class ClientFileIO {
         result.put("assistant",assistant);
         return result;
     }
-}
 
-//else if (line.split("").toString() == "") {
-//        break;
-//        }
+    public boolean deleteFile(Context context, String filename) {
+        File file = new File(context.getFilesDir(), filename);
+        if (file.exists()) {
+            return file.delete();
+        }
+        return false;
+    }
+
+    //-----------------SharedPreferences
+    public void putAssistantName(Context context,String prefs_name,String key,String value){
+        SharedPreferences prefs = context.getSharedPreferences(prefs_name,Context.MODE_PRIVATE);
+        prefs.edit().putString(key,value).apply();
+    }
+
+    public String getAssistantName(Context context,String prefs_name,String key,String def){
+        SharedPreferences prefs = context.getSharedPreferences(prefs_name,Context.MODE_PRIVATE);
+        return prefs.getString(key,def);
+    }
+
+    public boolean cleanAssistantName(Context context,String prefs_name,String key){
+        SharedPreferences prefs = context.getSharedPreferences(prefs_name,Context.MODE_PRIVATE);
+        boolean check = prefs.edit().remove(key).commit();
+        Log.d("SharedPreferences", "cleanAssistantName " + key + " " +String.valueOf(check));
+        return  check;
+    }
+}

@@ -78,11 +78,13 @@ public class TextWatcher {
              BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                builder.append(line);
+                builder.append(line).append("\n");
             }
         } catch (IOException e) {
             Log.e("儲存", "讀取檔案失敗: " + e.getMessage());
         }
         editTexts[i].setText(builder.toString());
     }
+
+
 }

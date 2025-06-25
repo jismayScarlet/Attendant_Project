@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -38,7 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 
 
-public class TimeTask extends AppCompatActivity {
+public class TimeTaskLayout extends AppCompatActivity {
     /*
     功能：
     1.獲取現在時間並顯示
@@ -96,6 +97,7 @@ public class TimeTask extends AppCompatActivity {
         layout.setFocusableInTouchMode(true);
         layout.requestFocus();
 
+
         ToggleCountdownController toggleCountdownController = new ToggleCountdownController(ett_timeSave,ctv_releaseTime,btn_timeSaver);
 
         //**獲取當前時間
@@ -144,7 +146,7 @@ public class TimeTask extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(swt_alarm_set.isChecked() != true) {
-                    TimePickerDialog timePickerDialog = new TimePickerDialog(TimeTask.this,new TimePickerDialog.OnTimeSetListener() {
+                    TimePickerDialog timePickerDialog = new TimePickerDialog(TimeTaskLayout.this,new TimePickerDialog.OnTimeSetListener() {
                         @Override
                         public void onTimeSet(TimePicker view, int Hour, int Minute) {
 
@@ -188,7 +190,7 @@ public class TimeTask extends AppCompatActivity {
             }
         });//設定Alarm時間為記錄時間
 
-        callAlarm = new CallAlarm(TimeTask.this);
+        callAlarm = new CallAlarm(TimeTaskLayout.this);
         swt_alarm_set.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -238,7 +240,7 @@ public class TimeTask extends AppCompatActivity {
                 cost = periodicTaskHandler.getTimeCost();
                 Log.i("costTime costTime comfirm",cost[0] + " " + cost[1]);
                 costTotal = cost[0] + cost[1];
-                new PeriodicTaskHandler(TimeTask.this);
+                new PeriodicTaskHandler(TimeTaskLayout.this);
 
                     if(costTotal < 1){
                         tv_costedTime.setText("總花費不足1分鐘");
@@ -246,7 +248,7 @@ public class TimeTask extends AppCompatActivity {
                         tv_costedTime.setText("總花費 " + costTotal + " 分鐘");
                     }
 
-                    textWatcher.timeInfoSave(TimeTask.this, "costTimeInfo", Integer.toString(costTotal), Integer.toString(cost[1]), timeSetMemery);//把確認的時間拋出去紀錄
+                    textWatcher.timeInfoSave(TimeTaskLayout.this, "costTimeInfo", Integer.toString(costTotal), Integer.toString(cost[1]), timeSetMemery);//把確認的時間拋出去紀錄
 
                     periodicTaskHandler.setTaskState(false);
                     tv_costedTime.setVisibility(View.VISIBLE);
@@ -260,7 +262,7 @@ public class TimeTask extends AppCompatActivity {
                     btn_timeSet.setClickable(true);
                     periodicTaskHandler.allValueReset();
                 }else{
-                    Toast.makeText(TimeTask.this,"任務尚未開始",Toast.LENGTH_LONG).show();
+                    Toast.makeText(TimeTaskLayout.this,"任務尚未開始",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -271,7 +273,7 @@ public class TimeTask extends AppCompatActivity {
                 if(periodicTaskHandler.getCostTimeSwitchCheck(0) || periodicTaskHandler.getCostTimeSwitchCheck(1)){
                     Toast.makeText(getApplicationContext(),"任務運作中，無法更改時間",Toast.LENGTH_LONG);
                 }else {
-                    showInputDialog(TimeTask.this, new InputCallback() {
+                    showInputDialog(TimeTaskLayout.this, new InputCallback() {
                         @Override
                         public void onInputConfirmed(String input) {
                             // 這裡是 callback 被執行的地方
@@ -290,14 +292,14 @@ public class TimeTask extends AppCompatActivity {
 
         EditText editTextPage[] = new EditText[]{et_taskName,et_taskDetailExcept,et_taskDetailRealize,et_taskDetailReplenish};
 
-        for(int i=0;i<=3;i++) {textWatcher.readTextFromFile(TimeTask.this, i, editTextPage);}//軟體啟動時還原紀錄的EditText訊息
-        textWatcher.setupDebouncedWatcher(TimeTask.this,editTextPage);//監視EditText的內容變更
+        for(int i=0;i<=3;i++) {textWatcher.readTextFromFile(TimeTaskLayout.this, i, editTextPage);}//軟體啟動時還原紀錄的EditText訊息
+        textWatcher.setupDebouncedWatcher(TimeTaskLayout.this,editTextPage);//監視EditText的內容變更
 
 
         btn_outPutFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    Intent outPutIntent = new Intent(TimeTask.this,TextControler.class);//建立並啟動存檔
+                    Intent outPutIntent = new Intent(TimeTaskLayout.this,TextControler.class);//建立並啟動存檔
                     outPutIntent.putExtra("TIME_INFO",textWatcher.getTimeInfo());
                     startActivity(outPutIntent);
             }
@@ -306,7 +308,7 @@ public class TimeTask extends AppCompatActivity {
         btn_usage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(TimeTask.this, UsageDocControl.class);
+                Intent intent = new Intent(TimeTaskLayout.this, UsageDocControl.class);
                 startActivity(intent);
             }
         });
@@ -314,7 +316,7 @@ public class TimeTask extends AppCompatActivity {
         btn_clear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(TimeTask.this)
+                new AlertDialog.Builder(TimeTaskLayout.this)
                         .setMessage("清除後無法還原")
                         .setNegativeButton("取消",null)
                         .setPositiveButton("清除任務內容", new DialogInterface.OnClickListener() {
@@ -328,7 +330,7 @@ public class TimeTask extends AppCompatActivity {
                                 et_taskDetailRealize.setText(null);
                                 et_taskDetailReplenish.setText(null);
                                 tv_costedTime.setText(null);
-                                new TextWatcher().clearTheInfo(TimeTask.this);
+                                new TextWatcher().clearTheInfo(TimeTaskLayout.this);
                             }
                         })
                         .setNeutralButton("清除儲存時間", new DialogInterface.OnClickListener() {
@@ -344,7 +346,7 @@ public class TimeTask extends AppCompatActivity {
         btn_sample.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(TimeTask.this)
+                new AlertDialog.Builder(TimeTaskLayout.this)
                         .setMessage("是否設定為＂補充內容＂之範本")
                         .setNegativeButton("取消",null)
                         .setPositiveButton("確定", new DialogInterface.OnClickListener() {
@@ -352,7 +354,7 @@ public class TimeTask extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 StringBuilder builder = new StringBuilder();
                                 try {
-                                    FileOutputStream fos = TimeTask.this.openFileOutput("sample", Context.MODE_PRIVATE);
+                                    FileOutputStream fos = TimeTaskLayout.this.openFileOutput("sample", Context.MODE_PRIVATE);
                                     fos.write(String.valueOf(et_taskDetailReplenish.getText()).getBytes(StandardCharsets.UTF_8));
                                     fos.flush();
                                 } catch (IOException e) {
@@ -364,7 +366,7 @@ public class TimeTask extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 StringBuilder builder = new StringBuilder();
-                                try (FileInputStream fis = TimeTask.this.openFileInput("sample");
+                                try (FileInputStream fis = TimeTaskLayout.this.openFileInput("sample");
                                      BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
                                     String line;
                                     while ((line = reader.readLine()) != null) {
@@ -392,7 +394,7 @@ public class TimeTask extends AppCompatActivity {
         EditText input = new EditText(context);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
 
-        new AlertDialog.Builder(TimeTask.this)
+        new AlertDialog.Builder(TimeTaskLayout.this)
                 .setTitle("輸入預計花費時間")
                 .setMessage("分鐘為單位")
                 .setView(input)
@@ -421,7 +423,7 @@ public class TimeTask extends AppCompatActivity {
                 @SuppressLint("WrongConstant")
                 final int takeFlags = data.getFlags() &
                         (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);//取得久持權限
-                TimeTask.this.getContentResolver().takePersistableUriPermission(uriSet, takeFlags);
+                TimeTaskLayout.this.getContentResolver().takePersistableUriPermission(uriSet, takeFlags);
 
 
 

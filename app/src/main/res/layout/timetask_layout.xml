@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         android:hapticFeedbackEnabled="false"
         android:paddingHorizontal="4dp"
-        tools:context=".time_task.TimeTask"
+        tools:context=".time_task.TimeTaskLayout"
         android:id="@+id/root_layout">
 
         <!-- 現在日期時間 -->
@@ -227,15 +227,29 @@
             app:layout_constraintStart_toStartOf="@+id/et_taskDetailExcept"
             app:layout_constraintTop_toBottomOf="@+id/et_taskDetailExcept" />
 
+<!--        <ScrollView-->
+<!--            android:id="@+id/taskDetailReplenish_scrollView"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="255dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:background="@android:drawable/gallery_thumb"-->
+<!--            app:layout_constraintEnd_toEndOf="@+id/et_taskDetailRealize"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/et_taskDetailRealize"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/et_taskDetailRealize">-->
+
+<!--            -->
+<!--        </ScrollView>-->
+
         <EditText
             android:id="@+id/et_taskDetailReplenish"
             android:layout_width="0dp"
-            android:layout_height="255dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:autoSizeMaxTextSize="16sp"
             android:autoSizeTextType="uniform"
             android:gravity="top|left"
             android:hint="補充內容"
+            android:scrollbars="vertical"
             app:layout_constraintEnd_toEndOf="@+id/et_taskDetailRealize"
             app:layout_constraintStart_toStartOf="@+id/et_taskDetailRealize"
             app:layout_constraintTop_toBottomOf="@+id/et_taskDetailRealize" />
@@ -253,7 +267,6 @@
             android:id="@+id/btn_clear"
             android:layout_width="0dp"
             android:layout_height="42dp"
-            android:layout_marginTop="5dp"
             android:autoSizeMaxTextSize="14sp"
             android:autoSizeTextType="uniform"
             android:text="清除功能"
