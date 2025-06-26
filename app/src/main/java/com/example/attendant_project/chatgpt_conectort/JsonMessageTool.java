@@ -210,102 +210,6 @@ public class JsonMessageTool {
         return firstChoice.getJSONObject("message");
     }
 
-//    public JSONObject jsonPostAndResponseForWebSearch(Request request, OkHttpClient client) throws JSONException {
-//        String responseBody = null;
-//        try (Response responseSet = client.newCall(request).execute()) {
-//
-//            if (!responseSet.isSuccessful()) {
-//                Log.e("GPT post", "HTTP錯誤碼: " + responseSet.code());
-//                if (responseBody != null) {
-//                    Log.e("GPT post", "錯誤回傳內容: " + responseSet);
-//                } else if (responseBody == null || responseBody.trim().isEmpty()) {
-////                    Log.d("GPT post", "API 回傳為空 回傳資訊:\n" + responseSet);
-//                    String errorBody = responseSet.body() != null ? responseSet.body().string() : "無內容";
-//                    throw new RuntimeException("API回傳為空 錯誤碼: " + responseSet.code() + "\n錯誤內容: " + errorBody);
-//                } else {
-//                    Log.e("GPT post", "錯誤但無內容回傳");
-////                    responseBody = "{\"error\": \"空內容\"}";
-//                }
-//                throw new RuntimeException("API 回傳錯誤（" + responseSet.code() + "）");
-//            } else if (responseSet.isSuccessful()) {
-//                ResponseBody body = responseSet.body();
-//                if (body != null) {
-//                    responseBody = body.string();
-//                } else if (body == null) {
-//                    throw new IOException("response without body");
-//                }
-//                Log.i("GPT post", "初始角色設定推送成功");
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//        JSONObject jsonResponse = new JSONObject(responseBody);
-//        if (!jsonResponse.has("choices")) {
-//            throw new RuntimeException("GPT 回傳 JSON 格式錯誤：缺少 'choices'");
-//        }
-//        JSONArray choices = jsonResponse.getJSONArray("choices");
-//
-//        if (choices.length() == 0) {
-//            throw new RuntimeException("GPT 回傳 'choices' 為空");
-//        }
-//        JSONObject firstChoice = choices.getJSONObject(0);
-//
-//        if (!firstChoice.has("message")) {
-//            throw new RuntimeException("GPT 回傳缺少 'message'");
-//        }
-//        JSONObject message = firstChoice.getJSONObject("message");
-//        if(!message.has("content")){
-//            throw new RuntimeException("GPT 回傳缺少 'content");
-//        }
-//
-//        Log.i("GPT Response","web response success");
-//        return message.getString("content");
-//    }
-
-    /*
-    * toolName  = function tool名稱
-    * map key:"resId","TCName"+splitsLenght,"Authorization"
-    * splitsLenght : function tool 的內參數 數量
-    * functionSequence :　
-    * */
-//    public Map<String,String> responseParser(String toolName,String[][] toolResult,int functionSequence,int splitsLenght){
-//        String unsplit = null;
-//        Map<String,String> result = null;
-//        for(int reserve=0;reserve<2;reserve++){
-//            for(int functionQuentity=0;functionQuentity<toolResult[reserve].length;functionQuentity++){
-//                if (toolResult[1][functionQuentity] != null) {
-//                    if(toolResult[1][functionQuentity].equals(toolName)) {
-//                        result.put("resId",toolResult[0][functionQuentity]);
-//                        for (int coun = 0; coun < toolResult[2].length; coun++) {
-//                            if (toolResult[2][coun] == null) {
-//                                break;
-//                            }
-//                            unsplit = toolResult[2][coun];
-//                            for(int s = 0;s < splitsLenght;s++){
-//                                result.put("TCName" + String.valueOf(s),spliter(unsplit)) ;
-//                            }
-//                        }
-//                        result.put("Authorization","allow");
-//                    }
-//                }
-//            }
-//        }
-//        return  result;
-//    }
-//
-//    public Map<String,String> responseParser(String toolName,String[][] toolResult,int functionSequence,int splitsLenght){
-//
-//
-//    }
-//    private String spliter(String unsplit){
-//        String[] split = unsplit.split("eventMemery", 2);
-//        if (split.length > 1) {
-//            return split[1];
-//        }else{
-//            return  null;
-//        }
-//    }
-
     /*
     * String toolsFeedBack(
     *   toolName：運行的tool工具名稱,
@@ -316,7 +220,7 @@ public class JsonMessageTool {
     *   API_URL & API_KEY：post的必要資訊
     *   OkHttpClient client：建構GPT的JSON restful message必要套件
     * */
-    public static String toolsFeedBack
+    public String toolsFeedBack
             (String toolName,String arguments,String resId,String functionFeedBack,String GPTModel,String API_URL,String API_KEY,OkHttpClient client) throws IOException, JSONException  {
         JSONObject messageObjectTool = new JSONObject()
                 .put("role","tool")
