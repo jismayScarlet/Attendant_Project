@@ -11,6 +11,8 @@ import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.attendant_project.sqlite.DatabaseHelper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +20,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -150,6 +153,15 @@ public class ChatGPTClient {
                         Log.i("data clean","清除助手全部名稱 finish");
                     }
                     break;
+                case "systemRole inserted information delete":
+                    ClientFileIO clientFileIO = new ClientFileIO();
+                    clientFileIO.deleteFile(contextFrom,"systemRoleInsert");
+                    Toast.makeText(contextFrom,"動態角色設定資料 刪除完成",Toast.LENGTH_SHORT).show();
+                    break;
+                case "user information delete":
+                    new DatabaseHelper(contextFrom).destroyDataBase();
+                    Toast.makeText(contextFrom,"使用者關聯資料 刪除完成",Toast.LENGTH_SHORT).show();
+                    break;
                 case "清單":
                     discourseSentence =
                             "清除AIThoughts\n" +
@@ -157,6 +169,8 @@ public class ChatGPTClient {
                             "AIThoughts oragnize now\n" +
                             "AIThoughts 訊息插入\n" +
                             "清除助手全部名稱\n" +
+                            "systemRole inserted information delete\n" +
+                            "user information delete\n" +
                             "退出命令字串模式";
                     break;
                 case "退出命令字串模式":
@@ -220,17 +234,26 @@ public class ChatGPTClient {
                          ClientFileIO clientFileIO = new ClientFileIO();
                          String chatLog = clientFileIO.readTextFromFile(contextFrom);
                          Map chatLogMap = clientFileIO.readTextFromFileForPost(contextFrom,assistantNickName);
-                        String memoryAssistant = new MemoryOrganizer(contextFrom).memoryOrganizerExclusiveFileIO(true,null);
+                         String memoryAssistant = new MemoryOrganizer(contextFrom).memoryOrganizerExclusiveFileIO(true,null);
+
+                         String inserted = new ClientFileIO().readTextFromFile(contextFrom,"systemRoleInsert");
+                         String messageMix = null;
+                         if(!TextUtils.isEmpty(inserted) || inserted != null){
+                             messageMix = message + inserted;
+                         }else {
+                             messageMix = message;
+                         }
+
 
                          if (!TextUtils.isEmpty(memoryAssistant) && chatLog.isBlank()) {
-                             discourseSentence = newBasicSendMessage(message,system,memoryAssistant);
+                             discourseSentence = newBasicSendMessage(messageMix,system,memoryAssistant);
                              Log.i("chat state", "first chat with memory");
                          }else if (!chatLog.isBlank()) {
-                             discourseSentence = chatContinue(message, system, chatLogMap,memoryAssistant);
+                             discourseSentence = chatContinue(messageMix, system, chatLogMap,memoryAssistant);
                              //                    jsonResponseContent = normalChatContinue(message,system,chatLogMap);
                              Log.i("chat state", "normal continue");
                          }else {
-                             discourseSentence = basicSendMessage(message, system);
+                             discourseSentence = basicSendMessage(messageMix, system);
                              Log.i("chat state", "first chat");
                          }
                      } catch (SocketTimeoutException e) {
@@ -473,8 +496,10 @@ public class ChatGPTClient {
         String[] netSearch_p_TCD = {"想要搜尋的內容"};
         String[] systemRoleInsert_TCN = {"systemRoleInsert"};
         String[] systemRoleInsert_TCD = {"你的角色被要求的改變內容"};
-        String[] userAbout_TCN = {"userAboutTitle","deeptell"};
+        String[] userAbout_TCN = {"userAboutTitle","detail"};
         String[] userAbout_TCD = {"事情的重點","事情的細節內容"};
+        String[] userAboutRemember_TCN = {"remember"};
+        String[] userAboutRemember_TCD = {"回憶的內容關鍵字"};
 
         JSONArray toolsArray = new JSONArray()
                 .put(
@@ -485,15 +510,21 @@ public class ChatGPTClient {
                 )
                 .put(
                         JMT.GPTTools_Post("systemRoleInsert"
-                        ,"使用者對你的角色有描述，或希望你有什麼特質的時候呼叫"
+                        ,"使用者對你的角色有描述，或使用者希望你有什麼特質的時候呼叫"
                         ,systemRoleInsert_TCN
                         ,systemRoleInsert_TCD)
                 )
                 .put(
                         JMT.GPTTools_Post("userAbout"
-                ,"關於使用者密切關聯的的任何一切訊息,包含但不限於：喜好、厭惡、害怕、生氣的事物，生日、血型、身高、體重、星座。"
+                ,"儲存關於使用者密切關聯的的任何一切訊息,包含但不限於：喜好、厭惡、害怕、生氣的事物，生日、血型、身高、體重、星座。"
                         ,userAbout_TCN
                         ,userAbout_TCD)
+                )
+                .put(
+                        JMT.GPTTools_Post("userAboutRemember"
+                        ,"當有需要回憶使用者情報的時候，可以呼叫這個工具搜尋相關記憶"
+                        ,userAboutRemember_TCN
+                        ,userAboutRemember_TCD)
                 )
                 ;
 
@@ -550,8 +581,56 @@ public class ChatGPTClient {
                 }
             }
 
+            Map<String,String> userAbout = JMT.GPTTools_Response(toolCalls,"userAbout",userAbout_TCN);
+            if (userAbout != null) {
+                String funcionName = userAbout.get("functionName");
+                if(funcionName.equals("userAbout")){
+                    String userAboutTitle = userAbout.get("userAboutTitle");//"userAboutTitle","detail"
+                    String detail = userAbout.get("detail");
+                    DatabaseHelper dbh = new DatabaseHelper(contextFrom,userAboutTitle,detail);
+                    int resultCode = dbh.getOnCreateResultCode();
+                    if (resultCode == 1){
+                        discourseSentence = "是 " + userAboutTitle + " " + detail +" 嗎？";
+                        Toast.makeText(contextFrom,"被記住了",Toast.LENGTH_SHORT).show();
+                    }else if (resultCode == 2){
+                        String totalDetail = null;
+                        Stack detailStack = dbh.loadMemoryDetail(userAboutTitle);
+                        while(!detailStack.isEmpty()){
+                            totalDetail += detailStack.pop() + "，";
+                        }
+                        discourseSentence = userAboutTitle +" 這件事情好像提起過..." + totalDetail;
+                    } else if (resultCode == 0) {
+                        discourseSentence = userAboutTitle + "......什麼? " + detail;
+                    }
+                    Log.i("userAbout",userAboutTitle + "\n" + detail);
+                }
+            }
+            Map<String,String> userAboutRemember = JMT.GPTTools_Response(toolCalls,"userAboutRemember",userAbout_TCN);
+            if (userAboutRemember != null) {
+                String funcionName = userAboutRemember.get("functionName");
+                if(funcionName.equals("userAboutRemember")){
+                    String remember = userAboutRemember.get("remember");
+                    String resId = userAboutRemember.get("id");
+                    Stack<String> infoStack = new DatabaseHelper(contextFrom).getTableName("remember");
+                    String info = null;
+                    while (!infoStack.isEmpty()){
+                        info += infoStack.pop() + "；";
+                    }
+                    discourseSentence = JMT.toolsFeedBack("userAboutRemember","remember",resId,info,"gpt-4.1-nano",API_URL,API_KEY,client);
+                    Log.i("userAboutRemember","找到使用者相關記憶：\n" + info);
+                }
+            }
 
-
+            Map<String,String> systemRoleInsert = JMT.GPTTools_Response(toolCalls,"systemRoleInsert",systemRoleInsert_TCN);
+            if (systemRoleInsert != null) {
+                String funcionName = userAbout.get("functionName");
+                if(funcionName.equals("systemRoleInser")){
+                   ClientFileIO FIO = new ClientFileIO();
+                   String insertedRole = systemRoleInsert.get("systemRoleInsert");
+                   FIO.saveTextToFile(contextFrom,insertedRole + "\n","systemRoleInsert");
+                    Log.i("systemRoleInsert","以下內容加入到system的浮動角色設定中\n" + insertedRole);
+                }
+            }
         }
 
         Log.i("GPT Response","continueChat content:\n " + content);
