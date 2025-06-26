@@ -34,7 +34,7 @@ public class MemoryOrganizer {
 
 
 
-    public void organize(){//對話整理
+    public void logOrganize(){//對話整理
         ClientFileIO clientFileIO = new ClientFileIO();
         handlerThreadInOrganizer.start();
         handlerInOrganizer = new Handler(handlerThreadInOrganizer.getLooper());
@@ -90,6 +90,10 @@ public class MemoryOrganizer {
         };
     }
 
+    public void changeRoleMessage(){
+
+    }
+
     /*
     * 外部關閉handler & Thread
     * */
@@ -141,7 +145,7 @@ public class MemoryOrganizer {
             startOrganizer();
             return true;
         }else if(memoryOrganization == null){
-            organize();
+            logOrganize();
             handlerInOrganizer.post(memoryOrganization);
             return true;
         }else {
