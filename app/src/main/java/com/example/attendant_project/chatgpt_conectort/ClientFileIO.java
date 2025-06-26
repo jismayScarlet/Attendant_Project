@@ -253,6 +253,12 @@ public class ClientFileIO {
         return false;
     }
 
+    //讀取檔案後，超過字數限制wordsLimit時，截斷從頭數wordsDelet的字數
+    public void fileOverride(Context context,String fileName,String content,int wordsLimit,int wordsDelet) {
+        saveTextToFile(context, fileName,
+                readTextFromFileToStringBuulder(context, fileName), content,wordsLimit,wordsDelet);
+    }
+
     //-----------------SharedPreferences
     public void putAssistantName(Context context,String prefs_name,String key,String value){
         SharedPreferences prefs = context.getSharedPreferences(prefs_name,Context.MODE_PRIVATE);

@@ -84,7 +84,7 @@ public class AITalkerLayout extends AppCompatActivity {
         stopAndClearChat();
         voiceInputSwitch();
         postLog();
-        mo.organize();
+        mo.logOrganize();
         mo.startOrganizer();
         longMemoryChecker();
 
@@ -308,14 +308,14 @@ public class AITalkerLayout extends AppCompatActivity {
                             .setNeutralButton("送出後清除對話內容", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    new GPTMemoryTool(AITalkerLayout.this).fileOverride("taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
+                                    new ClientFileIO().fileOverride(AITalkerLayout.this,"taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
                                     tv_allMessage.setText(null);
                                 }
                             })
                             .setPositiveButton("送出", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    new GPTMemoryTool(AITalkerLayout.this).fileOverride("taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
+                                    new ClientFileIO().fileOverride(AITalkerLayout.this,"taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
                                 }
                             })
                             .show();
