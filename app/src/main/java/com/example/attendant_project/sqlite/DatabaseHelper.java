@@ -10,10 +10,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.Stack;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-    private static final String DATABASE_NAME = "GPTMemeryDatabase.db";
+    private static final String DATABASE_NAME = "GPTUserAbout.db";
     private static final int DATABASE_VERSION = 1;
     private static String memoryTitle,memoryDetail;
     private Context context;
+    private String temporaryMessage = null;
+    private int onCreateResultCode;
 
     public DatabaseHelper(Context context,String memoryTitle,String memoryDetail){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -28,13 +30,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        if(memoryTitle != null && !doesTableExist(db,memoryTitle)) {
-            String createTableSQL =
-                    "CREATE TABLE " + memoryTitle + " (" +
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                            "memoryDetail TEXT default " + memoryDetail + ")";
-            db.execSQL(createTableSQL);
-        }
+        onCreateResultCode = creatNewMemery(memoryTitle,memoryDetail);
     }
 
     @Override
@@ -45,37 +41,52 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     
-    public void creatNewMemery(String memoryTitle,String memoryDetail){
+    public int creatNewMemery(String memoryTitle,String memoryDetail){//created = 1;un-create = 2;inputProblem = 0;
         SQLiteDatabase db = getWritableDatabase();
-        if(memoryTitle != null && !doesTableExist(db,memoryTitle)) {
+        if(memoryTitle != null && !doesTableExist(memoryTitle)) {
             String createTableSQL =
                     "CREATE TABLE " + memoryTitle + " (" +
                             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                             "memoryDetail TEXT default " + memoryDetail + ")";
             db.execSQL(createTableSQL);
-        } else if (memoryTitle != null && doesTableExist(db,memoryTitle) && memoryDetail != null) {
+            db.close();
+            return 1;
+        } else if (memoryTitle != null && doesTableExist(memoryTitle) && memoryDetail != null) {
             String memoryDetailSearch =
                     "SELECT 1 FROM " + memoryTitle + " WHERE memoryDetail = ? LIMIT 1";
             Cursor cursor = db.rawQuery(memoryDetailSearch,new String[]{memoryDetail});
             if(!cursor.moveToFirst()){
-                insertDateTime(memoryTitle,memoryDetail);
+                insertDetail(memoryTitle,memoryDetail);
             }
+            db.close();
+            return 2;
+        }else{
+            db.close();
+            return  0;
+        }
 
+    }
+
+    private void insertDetail(String memoryTitle, String memoryDetail) {
+        SQLiteDatabase db = getWritableDatabase();
+        if(doesTableExist(memoryTitle)){
+            db.insert(memoryTitle, memoryDetail, null);
         }
         db.close();
     }
 
-    private void insertDateTime(String memoryTitle,String memoryDetail) {
+    private void inerDetail(String memoryTitle, String memoryDetail,String dateTime) {//附帶記憶時間
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
-        if(doesTableExist(db,memoryTitle)){
-            values.put("memoryDetail", memoryDetail);
+        if(doesTableExist(memoryTitle)){
+            values.put(memoryDetail, dateTime);
             db.insert(memoryTitle, null, values);
         }
         db.close();
     }
 
-    private boolean doesTableExist(SQLiteDatabase db, String memoryTitle) {
+    private boolean doesTableExist(String memoryTitle) {
+        SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
                 new String[]{memoryTitle}
@@ -85,10 +96,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             exists = cursor.getInt(0) > 0;
         }
         cursor.close();
+        db.close();
         return exists;
     }
 
-    public Stack<String> doedTableExist(String memoryTitle){
+    public Stack<String> getTableName(String memoryTitle){//模糊搜尋
         Stack<String> tableNames = new Stack<>();
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(
@@ -102,19 +114,33 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return  tableNames;
     }
 
-    public Stack<String> chackMemeryDetail(String memoryTitle,String memoryDetail){
+    public Stack<String> checkMemoryDetailDate(String memoryTitle,String memoryDetail){
         SQLiteDatabase db = getReadableDatabase();
         Stack<String> memoryDetails = new Stack<>();
         Cursor cursor = db.rawQuery(
-                "SELECT memoryDetail FROM " + memoryTitle + "AND memoryDetail LIKE ?",
+                "SELECT memoryDetail FROM " + memoryTitle + " AND memoryDetail LIKE ?",
                 new String[]{"%" + memoryDetail + "%"}
         );
         while (cursor.moveToNext()){
             memoryDetails.push(cursor.getString(0));
         }
+        cursor.close();
         db.close();
         return memoryDetails;
     }
+
+    public Stack<String> loadMemoryDetail(String memoryTitle){
+        SQLiteDatabase db = getReadableDatabase();
+        Stack<String> memoryDetails = new Stack<>();
+        Cursor cursor = db.rawQuery("SELECT memoryDetail FROM " + memoryTitle, null);
+        while (cursor.moveToNext()){
+            memoryDetails.push(cursor.getString(0));
+        }
+        cursor.close();
+        db.close();
+        return memoryDetails;
+    }
+
 
     public boolean deleteMemery(String memoryTitle) {
         try {
@@ -130,13 +156,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public boolean destroyDataBase(){
-        boolean deleted = context.deleteDatabase("GPTMemeryDatabase.db");
+        boolean deleted = context.deleteDatabase("GPTUserAbout.db");
         return deleted;
     }
 
+    public int getOnCreateResultCode() {
+        return onCreateResultCode;
+    }
 
 
-//    public void updateUser(String memoryTitle , String memoryDetail) {
+    //    public void updateUser(String memoryTitle , String memoryDetail) {
 //        SQLiteDatabase db = getWritableDatabase();
 //        ContentValues values = new ContentValues();
 //        values.put("memoryDetail", memoryDetail);
