@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cii_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00110F"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <ScrollView
+        android:id="@+id/editTextScrollView"
+        android:layout_width="0dp"
+        android:layout_height="140dp"
+        android:autofillHints="按下enter鍵送出"
+        android:background="@android:drawable/editbox_background_normal"
+        android:backgroundTint="#26A500BB"
+        app:layout_constraintBottom_toTopOf="@+id/btn_confireAndSend"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <EditText
+            android:id="@+id/et_chatBox"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:drawable/editbox_background_normal"
+            android:backgroundTint="#71FF8800"
+            android:backgroundTintMode="add"
+            android:hint="按下enter鍵送出"
+            android:textColor="@color/black"
+            android:tooltipText="按下enter鍵送出"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="parent" />
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:drawable/gallery_thumb"
+        app:layout_constraintBottom_toTopOf="@+id/editTextScrollView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tv_chatLog"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="顯示所有的對話"
+            android:textIsSelectable="true"
+            app:layout_constraintBottom_toTopOf="@+id/tv_AIMood"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tv_AIMood"
+            app:layout_constraintTop_toTopOf="parent" />
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btn_confireAndSend"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:autoSizeTextType="uniform"
+        android:backgroundTint="#6D2EDE"
+        android:backgroundTintMode="add"
+        android:text="確認送出"
+        android:textColor="#FED60E"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:strokeColor="#D5009688"
+        app:strokeWidth="3sp" />
+
+    <Button
+        android:id="@+id/btn_stopChatAndClear"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:autoSizeTextType="uniform"
+        android:backgroundTint="#6D2EDE"
+        android:backgroundTintMode="add"
+        android:gravity="center"
+        android:text="結束"
+        android:textColor="#FED60E"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:strokeColor="#D5009688"
+        app:strokeWidth="3sp" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="5sp"
+        android:autoSizeMaxTextSize="20sp"
+        android:backgroundTint="#6D2EDE"
+        android:backgroundTintMode="add"
+        android:gravity="center"
+        android:text="命令模式"
+        android:textColor="#FED60E"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_confireAndSend"
+        app:layout_constraintStart_toEndOf="@+id/btn_stopChatAndClear"
+        app:strokeColor="#D5009688"
+        app:strokeWidth="3sp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
