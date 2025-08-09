@@ -4,6 +4,8 @@ package com.example.attendant_project.chatgpt_conectort;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.speech.tts.TextToSpeech;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -40,9 +42,12 @@ public class ChatGPTClient {
 //對外測試金鑰
 // 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
 
+//原始金鑰
+//    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
+    //對外測試金鑰
+//    private static final String API_KEY = "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";
     //原始金鑰
-    //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
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "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";
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
     static boolean ENDOW = false;
     static String assistantName = null,assistantNickName = null;
@@ -62,10 +67,10 @@ public class ChatGPTClient {
     private static Context contextFrom;
     private static String system;
     private static String lastContent;
-    private static float frequencyPenalty_attr = 0.1F;//重複率 -2.0 ~ 2.0 (預設0.8)
+    private static float frequencyPenalty_attr = -0.5F;//重複率 -2.0 ~ 2.0 (預設0.8)
+    private static float temperature_attr = 1.3F;//隨機性 0.0 ~ 2.0 (預設0.7)
     private final static float highLevel_frequencyPenalty_attr = 1.8F;
     private final static float defualt_frequencyPenalty_attr = 0.8F;
-    private static float temperature_attr = 0.7F;//隨機性 0.0 ~ 2.0 (預設0.7)
 
     private final static float highLevel_temperature_attr = 1.4F;
     private final static float defualt_temperature_attr = 0.7F;
@@ -87,97 +92,11 @@ public class ChatGPTClient {
         assistantName = cfi.getAssistantName(contextFrom,assisPrefs_name,assistannameFile[0],"克莉絲蒂娜");
         assistantNickName = cfi.getAssistantName(contextFrom,assisPrefs_name,assistannameFile[1],"助手");
         if(commandPromptStatement(message)){
-            switch (message){
-                case "清除AIThoughts":
-                    new MemoryOrganizer(context).memoryClean();
-                    discourseSentence = "AIThoughts 清除程序執行完畢";
-                    Log.i("AIThoughts","清除AIThoughts finish");
-                    break;
-
-                case "調出AIThoughts":
-                    String content = new MemoryOrganizer(contextFrom).showMemory();
-                    if(!TextUtils.isEmpty(content)){
-//                        Toast.makeText(context.getApplicationContext(),"以下為AIThought的記憶資料:\n" + content,Toast.LENGTH_LONG).show();
-                        Log.i("AIThoughts","以下為AIThought的記憶資料:\n" + content );
-                        discourseSentence = "以下為AIThought的記憶資料:\n" + content;
-                    }
-                    else{
-                        Toast.makeText(context.getApplicationContext(),"以下為AIThought的記憶資料:\n" + content,Toast.LENGTH_LONG).show();
-                        Log.i("AIThoughts","沒有記憶資料");
-//                        discourseSentence = "沒有記憶資料";
-                    }
-                    break;
-                case "AIThoughts oragnize now":
-                    boolean startSuccese = new MemoryOrganizer(contextFrom).starOrganizerWithoutRT();
-                    content = new MemoryOrganizer(contextFrom).showMemory();
-                    if(startSuccese && !TextUtils.isEmpty(content)){
-                        Toast.makeText(context.getApplicationContext(),"記憶整理完成，新記憶資料:\n" + content,Toast.LENGTH_LONG).show();
-                        Log.i("AIThoughts","記憶整理完成，新記憶資料:\n" + content);
-//                        discourseSentence = "記憶整理完成，新記憶資料:\n" + content;
-                    }else if(!startSuccese){
-                        Toast.makeText(context.getApplicationContext(),"記憶整理完成，新記憶資料:\n" + content,Toast.LENGTH_LONG).show();
-                        Log.i("AIThoughts","系統異常:思考功能未被載入");
-//                        discourseSentence = "系統異常:思考功能未被載入";
-                    }else if(TextUtils.isEmpty(content)){
-                        Toast.makeText(context.getApplicationContext(),"系統異常:無已儲存系統記憶",Toast.LENGTH_LONG).show();
-                        Log.i("AIThoughts","系統異常:無已儲存系統記憶");
-//                        discourseSentence = "系統異常:無已儲存系統記憶";
-                    }else{
-                        discourseSentence = "其他未檢知異常";
-                    }
-                    break;
-                case "AIThoughts 訊息插入":
-                    final EditText insertMessage = new EditText(contextFrom);
-                    new AlertDialog.Builder(contextFrom)
-                            .setMessage("新增的AIThoughts內容")
-                            .setView(insertMessage)
-                            .setPositiveButton("插入", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    new MemoryOrganizer(contextFrom).memoryInsert(insertMessage.getText().toString());
-                                    Toast.makeText(contextFrom,"插入記憶完成",Toast.LENGTH_LONG).show();
-                                }
-                            })
-                            .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            }).show();
-                    break;
-                case "清除助手全部名稱":
-                    boolean a = new ClientFileIO().cleanAssistantName(contextFrom,assisPrefs_name,assistannameFile[0]);
-                    boolean b = new ClientFileIO().cleanAssistantName(contextFrom,assisPrefs_name,assistannameFile[1]);
-                    if(a && b){
-                        Toast.makeText(context,"清除助手全名 finish",Toast.LENGTH_SHORT);
-                        Log.i("data clean","清除助手全部名稱 finish");
-                    }
-                    break;
-                case "systemRole inserted information delete":
-                    ClientFileIO clientFileIO = new ClientFileIO();
-                    clientFileIO.deleteFile(contextFrom,"systemRoleInsert");
-                    Toast.makeText(contextFrom,"動態角色設定資料 刪除完成",Toast.LENGTH_SHORT).show();
-                    break;
-                case "user information delete":
-                    new DatabaseHelper(contextFrom).destroyDataBase();
-                    Toast.makeText(contextFrom,"使用者關聯資料 刪除完成",Toast.LENGTH_SHORT).show();
-                    break;
-                case "清單":
-                    discourseSentence =
-                            "清除AIThoughts\n" +
-                            "調出AIThoughts\n" +
-                            "AIThoughts oragnize now\n" +
-                            "AIThoughts 訊息插入\n" +
-                            "清除助手全部名稱\n" +
-                            "systemRole inserted information delete\n" +
-                            "user information delete\n" +
-                            "退出命令字串模式";
-                    break;
-                case "退出命令字串模式":
-                    ENDOW = false;
-                    discourseSentence = "已退出命令字串模式";
-                    break;
-            }
+            Intent intent = new Intent(context, CommandInputViewControler.class);
+            intent.putExtra("assisPrefs_name",assisPrefs_name);
+            intent.putExtra("assistannameFile",assistannameFile);
+            context.startActivity(intent);
+            discourseSentence = "(進入命令模式)";
         } else if(!commandPromptStatement(message)){
              if (TextUtils.isEmpty(assistantName) || TextUtils.isEmpty(assistantNickName) || assistantName.equals("克莉絲蒂娜") || assistantNickName.equals("助手")) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(contextFrom);
@@ -205,7 +124,7 @@ public class ChatGPTClient {
                                                 assistantNickName = input2.getText().toString();
                                                 cfi.putAssistantName(contextFrom,assisPrefs_name,assistannameFile[1],assistantNickName);
                                                 Toast.makeText(contextFrom,"我以後會以 " + assistantNickName + " 自稱。",Toast.LENGTH_SHORT);
-                                                discourseSentence = "『你要下達重要命令之前請直接呼喊我的全名』";
+                                                discourseSentence = "\n『你要下達重要命令之前請直接呼喊我的全名，\n在命令模式下輸入\"清單\"獲取命令清單』";
                                             }
                                         })
                                         .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -233,27 +152,26 @@ public class ChatGPTClient {
                          system = "記住本系統的唯一名稱為\"" + assistantNickName + "\"  ，但這是個小名，全名是你跟使用者的秘密。" + roleSet;
                          ClientFileIO clientFileIO = new ClientFileIO();
                          String chatLog = clientFileIO.readTextFromFile(contextFrom);
-                         Map chatLogMap = clientFileIO.readTextFromFileForPost(contextFrom,assistantNickName);
+                         Map chatLogMap = clientFileIO.readTextFromFileForPost(contextFrom,assistantNickName,clientFileIO.getChatLogName());
+                         Map organizedChatLog = clientFileIO.readTextFromFileForPost(contextFrom,assistantNickName,new MemoryOrganizer(contextFrom).getAIThoughtsName());
                          String memoryAssistant = new MemoryOrganizer(contextFrom).memoryOrganizerExclusiveFileIO(true,null);
 
                          String inserted = new ClientFileIO().readTextFromFile(contextFrom,"systemRoleInsert");
-                         String messageMix = null;
-                         if(!TextUtils.isEmpty(inserted) || inserted != null){
-                             messageMix = message + inserted;
+                         String systemMix = null;
+                         if(!TextUtils.isEmpty(inserted)){
+                             systemMix = system + inserted;
                          }else {
-                             messageMix = message;
+                             systemMix = system;
                          }
 
-
                          if (!TextUtils.isEmpty(memoryAssistant) && chatLog.isBlank()) {
-                             discourseSentence = newBasicSendMessage(messageMix,system,memoryAssistant);
+                             discourseSentence = newBasicSendMessage(message,systemMix,memoryAssistant);
                              Log.i("chat state", "first chat with memory");
                          }else if (!chatLog.isBlank()) {
-                             discourseSentence = chatContinue(messageMix, system, chatLogMap,memoryAssistant);
-                             //                    jsonResponseContent = normalChatContinue(message,system,chatLogMap);
+                             discourseSentence = chatContinue(message, systemMix, chatLogMap,organizedChatLog,memoryAssistant);
                              Log.i("chat state", "normal continue");
                          }else {
-                             discourseSentence = basicSendMessage(messageMix, system);
+                             discourseSentence = basicSendMessage(message, systemMix);
                              Log.i("chat state", "first chat");
                          }
                      } catch (SocketTimeoutException e) {
@@ -274,11 +192,11 @@ public class ChatGPTClient {
         String checkName = new ClientFileIO().getAssistantName(contextFrom,assisPrefs_name,assistannameFile[0],null);
         if(checkName != null) {
             if (content.equals(checkName)) {
-                discourseSentence = checkName + " 在此聽從你的命令";
-                ENDOW = true;
+                Toast.makeText(contextFrom,checkName + " 在此聽從你的命令",Toast.LENGTH_LONG).show(); ;
+                return true;
             }
         }
-        return ENDOW;
+        return false;
     }
 
     public static String sendMessageSample(String system,String message,String model) throws IOException, JSONException {
@@ -431,9 +349,9 @@ public class ChatGPTClient {
         JSONObject jsonSet = new JSONObject()
                 .put("model", "gpt-4.1-nano") // 預設 gpt-4.1-nano
                 .put("messages", new org.json.JSONArray()
-                        .put(JMT.systemObject(system))
+                        .put(JMT.systemObject(system + "。在這之後的是你的對話記憶摘要：" + memory))
                         .put(JMT.userObject(message))
-                        .put(JMT.assistantObject(memory)));
+                );
 
         RequestBody bodySet = RequestBody.create(
                 jsonSet.toString(),
@@ -462,9 +380,23 @@ public class ChatGPTClient {
     }
 
 
-    private static String chatContinue(String message,String system,Map chatLog,String organizedMemory) throws IOException, JSONException,SocketTimeoutException {
+    private static String chatContinue(String message,String system,Map chatLog,Map organizedChatLog,String organizedMemory) throws IOException, JSONException,SocketTimeoutException {
         String[] usermessage = (String[]) chatLog.get("userMessage");
         String[] assistant = (String[]) chatLog.get("assistant");
+        if(!organizedChatLog.isEmpty() || organizedMemory != null){
+            String[] a = (String[]) organizedChatLog.get("userMessage");
+            String[] b = (String[]) organizedChatLog.get("assistant");
+            int lengthA = a.length + usermessage.length;
+            int lengthB = b.length + assistant.length;
+            String[] usermessageMix = new String[lengthA];
+            String[] assistantMix = new String[lengthB];
+            System.arraycopy(a, 0, usermessageMix, 0, a.length);
+            System.arraycopy(usermessage, 0, usermessageMix, a.length, usermessage.length);
+            System.arraycopy(b, 0, assistantMix, 0, b.length);
+            System.arraycopy(assistant, 0, assistantMix, b.length, assistant.length);
+            usermessage = usermessageMix;
+            assistant = assistantMix;
+        }
 
         if (system == null || system.trim().isEmpty()) {
             system = "你沒有正確載入角色設定，你現在是具什麼都不回應的空殼"; // 預設 System Prompt
@@ -477,21 +409,30 @@ public class ChatGPTClient {
                 .put(JMT.systemObject(systemNew));
 
         int i = 0;
-        while (!TextUtils.isEmpty(usermessage[i]) || !TextUtils.isEmpty(assistant[i]) ){
-            while(!TextUtils.isEmpty(usermessage[i])){
-                messageArray
-                        .put(JMT.userObject(usermessage[i]));
-                i++;
+        int longest = (usermessage.length > assistant.length ? usermessage.length:assistant.length);
+            for(i=0;i<longest;i++){
+                if(!TextUtils.isEmpty(usermessage[i])){
+                    messageArray.put(JMT.userObject(usermessage[i]));
+                }else if (!TextUtils.isEmpty(assistant[i])) {
+                    messageArray.put(JMT.assistantObject(assistant[i]));
+                }
             }
-            while (!TextUtils.isEmpty(assistant[i])){
-                messageArray
-                        .put(JMT.assistantObject(assistant[i]));
-                i++;
-            }
-        }
+
+//        while (!TextUtils.isEmpty(usermessage[i]) || !TextUtils.isEmpty(assistant[i]) ){
+//            while(!TextUtils.isEmpty(usermessage[i])){
+//                messageArray
+//                        .put(JMT.userObject(usermessage[i]));
+//                i++;
+//            }
+//            while (!TextUtils.isEmpty(assistant[i])){
+//                messageArray
+//                        .put(JMT.assistantObject(assistant[i]));
+//                i++;
+//            }
+//        }
         messageArray.put(JMT.userObject(message));
 
-
+//TCN = ToolComponenName
         String[] netSearch_p_TCN = {"searchContent"};
         String[] netSearch_p_TCD = {"想要搜尋的內容"};
         String[] systemRoleInsert_TCN = {"systemRoleInsert"};
@@ -588,35 +529,46 @@ public class ChatGPTClient {
                     String userAboutTitle = userAbout.get("userAboutTitle");//"userAboutTitle","detail"
                     String detail = userAbout.get("detail");
                     DatabaseHelper dbh = new DatabaseHelper(contextFrom,userAboutTitle,detail);
+                    SQLiteDatabase db = dbh.getWritableDatabase();
+                    if(dbh.doesDatabaseExist(contextFrom)){
+                        dbh.creatNewMemory(db,userAboutTitle,detail);
+                    }
                     int resultCode = dbh.getOnCreateResultCode();
                     if (resultCode == 1){
-                        discourseSentence = "是 " + userAboutTitle + " " + detail +" 嗎？";
-                        Toast.makeText(contextFrom,"被記住了",Toast.LENGTH_SHORT).show();
+                        content = "是 " + userAboutTitle + " " + detail +" 嗎？";
+                        new MemoryOrganizer(contextFrom).changeRoleInfo(userAboutTitle,detail);//這邊進行system角色設定的改進
+                        Context context=null;
+                        Toast.makeText(context.getApplicationContext(),"被記住了",Toast.LENGTH_SHORT).show();
                     }else if (resultCode == 2){
-                        String totalDetail = null;
+                        String totalDetail = "";
                         Stack detailStack = dbh.loadMemoryDetail(userAboutTitle);
                         while(!detailStack.isEmpty()){
-                            totalDetail += detailStack.pop() + "，";
+                                totalDetail += detailStack.pop() + " ";
                         }
-                        discourseSentence = userAboutTitle +" 這件事情好像提起過..." + totalDetail;
-                    } else if (resultCode == 0) {
-                        discourseSentence = userAboutTitle + "......什麼? " + detail;
+                        content = userAboutTitle +" 這件事情好像提起過..." + totalDetail;
+                    } else {
+                        content = userAboutTitle + "......什麼? " + detail;
                     }
                     Log.i("userAbout",userAboutTitle + "\n" + detail);
                 }
             }
-            Map<String,String> userAboutRemember = JMT.GPTTools_Response(toolCalls,"userAboutRemember",userAbout_TCN);
+            Map<String,String> userAboutRemember = JMT.GPTTools_Response(toolCalls,"userAboutRemember",userAboutRemember_TCN);
             if (userAboutRemember != null) {
                 String funcionName = userAboutRemember.get("functionName");
                 if(funcionName.equals("userAboutRemember")){
                     String remember = userAboutRemember.get("remember");
-                    String resId = userAboutRemember.get("id");
-                    Stack<String> infoStack = new DatabaseHelper(contextFrom).getTableName("remember");
-                    String info = null;
+                    String resId = userAboutRemember.get("resId");
+                    String arguments = userAboutRemember.get("arguments");
+                    Stack<String> infoStack = new DatabaseHelper(contextFrom).getTableName(remember);
+                    String info = "";
                     while (!infoStack.isEmpty()){
                         info += infoStack.pop() + "；";
                     }
-                    discourseSentence = JMT.toolsFeedBack("userAboutRemember","remember",resId,info,"gpt-4.1-nano",API_URL,API_KEY,client);
+                    if(!TextUtils.isEmpty(info)) {
+                        content = JMT.toolsFeedBack("userAboutRemember", arguments, resId, info, "gpt-4.1-nano", API_URL, API_KEY, client,contextFrom);
+                    }else{
+                        content = JMT.toolsFeedBack("userAboutRemember", arguments, resId, "系統內沒有資料，你要用自己想不起來的方式回應", "gpt-4.1-nano", API_URL, API_KEY, client,contextFrom);
+                    }
                     Log.i("userAboutRemember","找到使用者相關記憶：\n" + info);
                 }
             }
@@ -627,11 +579,17 @@ public class ChatGPTClient {
                 if(funcionName.equals("systemRoleInser")){
                    ClientFileIO FIO = new ClientFileIO();
                    String insertedRole = systemRoleInsert.get("systemRoleInsert");
+                   String resId = systemRoleInsert.get("resId");
+                   String arguments = systemRoleInsert.get("arguments");
                    FIO.saveTextToFile(contextFrom,insertedRole + "\n","systemRoleInsert");
+                   content = JMT.toolsFeedBack("systemRoleInser",arguments,resId,insertedRole,"gpt-4.1-nano",API_URL,API_KEY,client,contextFrom);
                     Log.i("systemRoleInsert","以下內容加入到system的浮動角色設定中\n" + insertedRole);
                 }
             }
+        }else{
+            content = messageResponse.getString("content");
         }
+
 
         Log.i("GPT Response","continueChat content:\n " + content);
         Log.i("GPT post","In Object \n" + jsonSet);

@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class ClientFileIO {
@@ -25,6 +26,10 @@ public class ClientFileIO {
 // 訊息超過 10000，刪除最前面 500 個字符，理想上是呼叫GPT自己整理一下內容再放回去
 
 
+    public String getChatLogName(){
+        return  fileName;
+    }
+
     public String getRoleSet(Context context){
         InputStream inputStream = context.getResources().openRawResource(R.raw.system_role_set);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
@@ -33,6 +38,7 @@ public class ClientFileIO {
             while ((line = reader.readLine()) != null) {
                 content.append(line);
             }
+            Log.d("system","getRoleSet success");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -166,7 +172,7 @@ public class ClientFileIO {
         return builder.toString();
     }
 
-    public StringBuilder readTextFromFileToStringBuulder(Context context,String fileName) {//讀取檔案字串
+    public StringBuilder readTextFromFileToStringBulder(Context context, String fileName) {//讀取檔案字串
         StringBuilder builder = new StringBuilder();
         try (FileInputStream fis = context.openFileInput(fileName);
              BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
@@ -238,12 +244,50 @@ public class ClientFileIO {
         return getLogSplit(userMessage,assistant);
     }
 
+    public Map readTextFromFileForPost(Context context,String nickname,String fileName){
+        LinkedList<String> userMessageDeque = new LinkedList<>(),assistantDeque = new LinkedList<>();
+        try (FileInputStream fis = context.openFileInput(fileName);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+
+            while ((line = reader.readLine()) != null) {
+                //reader.readLine()從前面開始讀file
+                String[] part = line.split("マスター：",2);//切成兩行
+                if(part.length < 2){//沒有找到字串導致
+                    String word = nickname+"：";
+                    part = line.split( word,2);
+                    if(part.length < 2){
+                        Log.i("file IO","RFP read blank");
+                        continue;
+                    }  else{
+                        assistantDeque.addFirst(part[1]);
+                        userMessageDeque.addFirst(null);
+                    }
+                }else {
+                    assistantDeque.addFirst(null);
+                    userMessageDeque.addFirst(part[1]);
+                }
+            }
+        } catch (IOException e) {
+            Log.e("儲存", "讀取檔案失敗: " + e.getMessage());
+        }
+
+        String[] userMessage = new String[userMessageDeque.size()]
+                ,assistant = new String[assistantDeque.size()];
+        int longest = (userMessage.length > assistant.length ? userMessage.length:assistant.length);
+        for(int i=0;i<longest;i++){
+            userMessage[i] = userMessageDeque.pollLast();
+            assistant[i] = assistantDeque.pollLast();
+        }
+        return getLogSplit(userMessage,assistant);
+    }
+
     private Map<String,String[]> getLogSplit(String[] userMessage,String[] assistant){
         Map<String,String[]> result = new HashMap<>();
         result.put("userMessage",userMessage);
         result.put("assistant",assistant);
         return result;
     }
+
 
     public boolean deleteFile(Context context, String filename) {
         File file = new File(context.getFilesDir(), filename);
@@ -256,7 +300,7 @@ public class ClientFileIO {
     //讀取檔案後，超過字數限制wordsLimit時，截斷從頭數wordsDelet的字數
     public void fileOverride(Context context,String fileName,String content,int wordsLimit,int wordsDelet) {
         saveTextToFile(context, fileName,
-                readTextFromFileToStringBuulder(context, fileName), content,wordsLimit,wordsDelet);
+                readTextFromFileToStringBulder(context, fileName), content,wordsLimit,wordsDelet);
     }
 
     //-----------------SharedPreferences

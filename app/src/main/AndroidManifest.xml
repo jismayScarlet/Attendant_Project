@@ -2,12 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"
         android:minSdkVersion="19"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:allowBackup="true"
@@ -30,11 +36,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".time_task.TimeTaskLayout"/>
+<!--        <activity android:name=".廢棄.TimeTaskLayout"/>-->
+<!--        <activity android:name=".廢棄.AITalkerLayout"/>-->
         <activity android:name=".time_task.TextControler"/>
         <activity android:name=".time_task.UsageDocControl"/>
-        <activity android:name=".chatgpt_conectort.AITalkerLayout"/>
+        <activity android:name=".chatgpt_conectort.CommandInputViewControler"/>
         <activity android:name=".chatgpt_conectort.ChatGPTClient"/>
+        <activity android:name=".MemoBuddy.View.MemoBuddyFragment"/>
 
         <receiver android:name=".time_task.AlarmReceiver"
             android:exported="false"/>

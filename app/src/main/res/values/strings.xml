@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Attendant_Project</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="start_capture">Start Capture</string>
+    <string name="stop_capture">Stop Capture</string>
+    <string name="alert_dialog_ok">Alert Dialog Ok</string>
+    <string name="alert_dialog_cancel">Alert Dialog Cancel</string>
+    <string name="alert_dialog_two_buttons_title">Alert Dialog Two Buttons Title</string>
+
 </resources>

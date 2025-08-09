@@ -36,8 +36,14 @@ public class MemoryOrganizer {
     public MemoryOrganizer(Context context){
         this.context = context;
     }
+    public MemoryOrganizer(){}
 
     public String getResult(){return  result;}
+    public String getResultForChatLog(){
+        String pop = result;
+        result = null;
+        return pop;
+    }
 
     public void logOrganize(){//對話整理
         ClientFileIO clientFileIO = new ClientFileIO();
@@ -46,28 +52,22 @@ public class MemoryOrganizer {
         thoughts = clientFileIO.readTextFromFile(context,AIThoughts);//取得 思考記憶
         chatLog = clientFileIO.readTextFromFile(context,new ClientFileIO().getChatLogName());//當前對話紀錄
         roleSet = clientFileIO.getRoleSet(context);
-        if(!TextUtils.isEmpty(thoughts) || !TextUtils.isEmpty(chatLog)){
-            system = roleSet;
-            String messageMix =
-                    "提示：這是對話內容記憶工具。" +
-                    "1.保留每句抬頭，如:マスター：" +
-                    "2.維持內容的大綱順序。" +
-                    "3.確保完全理解內容的主題和要點。" +
-                    "4.精簡每句對話並保留重點" +
-                    "重要注意：這不是使用者傳遞的訊息，是程式功能。";
+        system = roleSet;
+        String messageMix =
+                "提示：這是對話內容記憶工具。" +
+                        "1.保留每句抬頭，並保持每行的句子格式，如:マスター：" +
+                        "2.維持內容的大綱順序。" +
+                        "3.確保完全理解內容的主題和要點。" +
+                        "4.精簡每句對話並保留重點" +
+                        "5.檢查全文是否前後相同，若相同就放棄新增相同的部分" +
+                        "重要注意：這不是使用者傳遞的訊息，是程式功能。";
+        assistant = "請給我對話紀錄。";
+        if(!TextUtils.isEmpty(thoughts) && !TextUtils.isEmpty(chatLog)){
             message =  thoughts + chatLog + "。 將前面的段落以下面的方式整理起來，" + messageMix;
-            Log.i("memory organizer","(unstarted) organize by:\n" + thoughts);
-        }else if(!TextUtils.isEmpty(thoughts)){
-            system = roleSet;
-            String messageMix =
-                    "提示：這是對話內容記憶工具。" +
-                    "1.保留每句抬頭，如:マスター：" +
-                    "2.維持內容的大綱順序。" +
-                    "3.確保完全理解內容的主題和要點。" +
-                    "4.精簡每句對話並保留重點" +
-                    "重要注意：這不是使用者傳遞的訊息，是程式功能。";
+            Log.i("memory organizer","(unstarted) organize by:\n" + message);
+        }else if(TextUtils.isEmpty(thoughts) && !TextUtils.isEmpty(chatLog)){
             message =   chatLog + "。 將前面的段落以下面的方式整理起來，" + messageMix;
-            Log.i("memory organizer","(unstarted) organize by:\n" + thoughts);
+            Log.i("memory organizer","(unstarted) organize by:\n" + message);
         }else{
             message = "對使用者提出自己的角色設定。";
         }
@@ -77,15 +77,11 @@ public class MemoryOrganizer {
             public void run() {
                     try {
                         Toast.makeText(context, "(回憶中)", Toast.LENGTH_SHORT).show();
-
-                        if(!TextUtils.isEmpty(thoughts)) {
                             String organized = ChatGPTClient.sendMessageSample(system, message, assistant, "gpt-4.1-2025-04-14");//o4-mini
                             clientFileIO.saveTextToFile(context, organized, AIThoughts);
-                            result = ChatGPTClient.sendMessageSample(roleSet + organized, "隨機一件事情，但不要說出來。","我正準備跟使用者提起角色設定裡面的一件事情。", "gpt-4.1-nano-2025-04-14");
-                        }else {
-                            result = ChatGPTClient.sendMessageSample(system,message,"gpt-4.1-nano-2025-04-14");
+                        if(!TextUtils.isEmpty(organized) && !Command.getENDOW()){
+                            result = ChatGPTClient.sendMessageSample(roleSet + organized, "從system中挑選一件事情拿出來說。","接下來那句使用者要求的回應，我會表現成自己想到的。", "gpt-4.1-nano-2025-04-14");
                         }
-                        ChatGPTClient.putDiscourseSentence(result);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (JSONException e) {

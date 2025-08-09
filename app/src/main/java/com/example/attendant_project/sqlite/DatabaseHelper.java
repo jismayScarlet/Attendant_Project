@@ -6,7 +6,9 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
+import java.io.File;
 import java.util.Stack;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
@@ -30,7 +32,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        onCreateResultCode = creatNewMemery(memoryTitle,memoryDetail);
+        onCreateResultCode = creatNewMemory(db,memoryTitle,memoryDetail);
     }
 
     @Override
@@ -41,52 +43,81 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     
-    public int creatNewMemery(String memoryTitle,String memoryDetail){//created = 1;un-create = 2;inputProblem = 0;
-        SQLiteDatabase db = getWritableDatabase();
-        if(memoryTitle != null && !doesTableExist(memoryTitle)) {
-            String createTableSQL =
-                    "CREATE TABLE " + memoryTitle + " (" +
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                            "memoryDetail TEXT default " + memoryDetail + ")";
-            db.execSQL(createTableSQL);
-            db.close();
-            return 1;
-        } else if (memoryTitle != null && doesTableExist(memoryTitle) && memoryDetail != null) {
-            String memoryDetailSearch =
-                    "SELECT 1 FROM " + memoryTitle + " WHERE memoryDetail = ? LIMIT 1";
-            Cursor cursor = db.rawQuery(memoryDetailSearch,new String[]{memoryDetail});
-            if(!cursor.moveToFirst()){
-                insertDetail(memoryTitle,memoryDetail);
-            }
-            db.close();
-            return 2;
-        }else{
-            db.close();
-            return  0;
-        }
+//    public int creatNewMemery(SQLiteDatabase db,String memoryTitle,String memoryDetail){//created = 1;un-create = 2;inputProblem = 0;
+//        if(memoryTitle != null && !doesTableExist(memoryTitle)) {
+//            String createTableSQL =
+//                    "CREATE TABLE " + memoryTitle + " (" +
+//                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+//                            "memoryDetail TEXT default " + memoryDetail + ")";
+//            db.execSQL(createTableSQL);
+//            return 1;
+//        } else if (memoryTitle != null && doesTableExist(memoryTitle)) {
+//            String memoryDetailSearch =
+//                    "SELECT 1 FROM " + memoryTitle + " WHERE memoryDetail = ? LIMIT 1";
+//            Cursor cursor = db.rawQuery(memoryDetailSearch,new String[]{memoryDetail});
+//            if(!cursor.moveToFirst()){
+//                insertDetail(memoryTitle,memoryDetail);
+//            }
+//            return 2;
+//        }else{
+//            return  0;
+//        }
+//
+//    }
 
+    public int creatNewMemory(SQLiteDatabase db, String memoryTitle, String memoryDetail) {//created = 1;un-create = 2;inputProblem = 0;
+        String safeTitle = "\"" + memoryTitle.replace("\"", "") + "\"";
+        String safeDetail = "\"" + memoryDetail.replace("\"", "") + "\"";
+        Log.i("database function","createNewmemory");
+        if (memoryTitle != null && !doesTableExist(memoryTitle)) {
+            String createTableSQL =
+                    "CREATE TABLE " + safeTitle + " (" +
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                            "memoryDetail TEXT DEFAULT '" + safeDetail + "')";
+            db.execSQL(createTableSQL);
+            onCreateResultCode = 1;
+            return 1;
+        } else if (memoryTitle != null && doesTableExist(memoryTitle)) {
+            String memoryDetailSearch =
+                    "SELECT 1 FROM " + safeTitle + " WHERE memoryDetail = ? LIMIT 1";
+            Cursor cursor = db.rawQuery(memoryDetailSearch, new String[]{memoryDetail});
+            if (!cursor.moveToFirst()) {
+                insertDetail(memoryTitle, memoryDetail);
+            }
+            onCreateResultCode = 2;
+            return 2;
+        } else {
+            onCreateResultCode = 0;
+            return 0;
+        }
     }
 
     private void insertDetail(String memoryTitle, String memoryDetail) {
+        Log.i("database function","insertDetail");
+        String safeDetail = "\"" + memoryDetail.replace("\"", "") + "\"";
+        String safeTitle = "\"" + memoryTitle.replace("\"", "") + "\"";
         SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(safeDetail, "");
         if(doesTableExist(memoryTitle)){
-            db.insert(memoryTitle, memoryDetail, null);
+            db.insert(safeTitle, null,values);
         }
-        db.close();
     }
 
     private void inerDetail(String memoryTitle, String memoryDetail,String dateTime) {//附帶記憶時間
+        String safeDetail = "\"" + memoryDetail.replace("\"", "") + "\"";
+        String safeTitle = "\"" + memoryTitle.replace("\"", "") + "\"";
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         if(doesTableExist(memoryTitle)){
-            values.put(memoryDetail, dateTime);
-            db.insert(memoryTitle, null, values);
+            values.put(safeDetail, dateTime);
+            db.insert(safeTitle, null, values);
         }
-        db.close();
+        
     }
 
     private boolean doesTableExist(String memoryTitle) {
-        SQLiteDatabase db = getReadableDatabase();
+        SQLiteDatabase db = getWritableDatabase();
         Cursor cursor = db.rawQuery(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
                 new String[]{memoryTitle}
@@ -96,81 +127,126 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             exists = cursor.getInt(0) > 0;
         }
         cursor.close();
-        db.close();
         return exists;
     }
 
     public Stack<String> getTableName(String memoryTitle){//模糊搜尋
+        Log.i("database function","getTableName：" + memoryTitle);
+        SQLiteDatabase db = getWritableDatabase();
         Stack<String> tableNames = new Stack<>();
-        SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?",
+                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ? COLLATE NOCASE",
                 new String[]{"%" + memoryTitle + "%"});
-        cursor.moveToFirst();
-        while (cursor.moveToNext()) {
-            tableNames.push(cursor.getString(0));
+        if (cursor.moveToFirst()) {
+            do {
+                tableNames.push(cursor.getString(0));
+                Log.i("database function", "table name = " + cursor.getString(0));
+            } while (cursor.moveToNext());
         }
-        db.close();
+
+        cursor = db.rawQuery(//搜索全表單 測試
+                "SELECT name FROM sqlite_master WHERE type='table'",
+                null);
+        if(cursor.moveToFirst()) {
+            do {
+                Log.i("database function", "QueryTest table name = " + cursor.getString(0));
+            }while (cursor.moveToNext());
+        }
+        cursor.close();
         return  tableNames;
     }
 
     public Stack<String> checkMemoryDetailDate(String memoryTitle,String memoryDetail){
-        SQLiteDatabase db = getReadableDatabase();
+        String safeDetail = "\"" + memoryDetail.replace("\"", "") + "\"";
+        String safeTitle = "\"" + memoryTitle.replace("\"", "") + "\"";
+        SQLiteDatabase db = getWritableDatabase();
         Stack<String> memoryDetails = new Stack<>();
         Cursor cursor = db.rawQuery(
-                "SELECT memoryDetail FROM " + memoryTitle + " AND memoryDetail LIKE ?",
+                "SELECT " + safeDetail + " FROM " + safeTitle + " AND memoryDetail LIKE ?",
                 new String[]{"%" + memoryDetail + "%"}
         );
         while (cursor.moveToNext()){
             memoryDetails.push(cursor.getString(0));
         }
         cursor.close();
-        db.close();
         return memoryDetails;
     }
 
-    public Stack<String> loadMemoryDetail(String memoryTitle){
-        SQLiteDatabase db = getReadableDatabase();
+    public Stack<String> loadMemoryDetail(String memoryTitle){//可能會異常
+        Log.i("database function","loadMemoryDetail");
+        String safeDetail = "\"" + memoryDetail.replace("\"", "") + "\"";
+        String safeTitle = "\"" + memoryTitle.replace("\"", "") + "\"";
+        SQLiteDatabase db = getWritableDatabase();
         Stack<String> memoryDetails = new Stack<>();
-        Cursor cursor = db.rawQuery("SELECT memoryDetail FROM " + memoryTitle, null);
+        Cursor cursor = db.rawQuery("SELECT " + safeDetail + " FROM " + safeTitle, null);
         while (cursor.moveToNext()){
             memoryDetails.push(cursor.getString(0));
         }
         cursor.close();
-        db.close();
         return memoryDetails;
     }
 
 
-    public boolean deleteMemery(String memoryTitle) {
-        try {
+    public boolean deleteMemory(String memoryTitle) {
+        Log.i("database function","deleteMemory");
+        String safeTitle = "\"" + memoryTitle.replace("\"", "") + "\"";
         SQLiteDatabase db = getWritableDatabase();
+        try {
         String deletTable =
-                "DROP TABLE " + memoryTitle ;
+                "DROP TABLE " + safeTitle ;
             db.execSQL(deletTable);
-            db.close();
+            
         }catch (SQLException e){
             return false;
         }
         return true;
     }
 
-    public boolean destroyDataBase(){
-        boolean deleted = context.deleteDatabase("GPTUserAbout.db");
+    public boolean destroyDataBase(Context context){
+        Log.i("database function","destroyDatabase");
+        boolean deleted = context.deleteDatabase("GPTUserAbout.db");//包裝過的database.deleteDatabase方法，直接幫你抓好資料庫路徑以及並執行刪除
         return deleted;
+    }
+
+    public boolean doesDatabaseExist(Context context, String dbName) {
+        File dbFile = context.getDatabasePath(dbName);
+        return dbFile.exists();
+    }
+
+    public boolean doesDatabaseExist(Context context) {
+        Log.i("database function","doesDatabaseExist");
+        File dbFile = context.getDatabasePath(DATABASE_NAME);
+        return dbFile.exists();
     }
 
     public int getOnCreateResultCode() {
         return onCreateResultCode;
     }
 
+    /*
+    safeQuery 工具方法，它支援：
+    指定 table 名稱與欄位名稱（都會自動轉義）
+    傳入比對值（自動安全綁定）
+    回傳 Cursor，你可以自己決定怎麼處理結果
+    */
+    private Cursor safeQuery(SQLiteDatabase db, String table, String column, String value) {
+        String safeTable = quoteIdentifier(table);
+        String safeColumn = quoteIdentifier(column);
+
+        String sql = "SELECT * FROM " + safeTable + " WHERE " + safeColumn + " = ?";
+
+        return db.rawQuery(sql, new String[]{value});
+    }
+    private String quoteIdentifier(String identifier) {
+        return "\"" + identifier.replace("\"", "\"\"") + "\""; // ANSI SQL 標準跳脫
+    }
 
     //    public void updateUser(String memoryTitle , String memoryDetail) {
 //        SQLiteDatabase db = getWritableDatabase();
 //        ContentValues values = new ContentValues();
 //        values.put("memoryDetail", memoryDetail);
 //        db.update(memoryTitle, values);
-//        db.close();
+//        
 //    }
 
 //    public void changeColumn(){//修改欄位

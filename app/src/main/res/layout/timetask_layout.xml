@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         android:hapticFeedbackEnabled="false"
         android:paddingHorizontal="4dp"
-        tools:context=".time_task.TimeTaskLayout"
+        tools:context=".廢棄.TimeTaskLayout"
         android:id="@+id/root_layout">
 
         <!-- 現在日期時間 -->

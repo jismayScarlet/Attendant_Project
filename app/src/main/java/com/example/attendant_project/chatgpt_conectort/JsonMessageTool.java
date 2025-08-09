@@ -1,5 +1,6 @@
 package com.example.attendant_project.chatgpt_conectort;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -55,6 +56,50 @@ public class JsonMessageTool {
         }
     }
 
+    public JSONObject base64ImageObject(String BASE64Image, String require, boolean highQuality) throws JSONException{
+        String BASE64 = "data:image/jpeg;base64," + BASE64Image;
+        if(BASE64.length() > 27000000){
+            throw new RuntimeException("圖片超過 OpenAI 上限，請縮小圖片再嘗試");
+        }else {
+            if (!BASE64Image.isBlank()) {
+                JSONObject userObject = new JSONObject()
+                        .put("role", "user")
+                        .put("content", new JSONArray()
+                                .put(new JSONObject()
+                                        .put("type", "text")
+                                        .put("text", require))
+                                .put(new JSONObject()
+                                        .put("type", "image_url")
+                                        .put("image_url", new JSONObject()
+                                                .put("url", BASE64)
+                                                .put("detail", highQuality ? "high" : "low"))));
+                return userObject;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    public JSONObject httpsImageObject(String https, String require, boolean highQuality) throws JSONException{
+            if (!https.isBlank()) {
+                JSONObject userObject = new JSONObject()
+                        .put("role", "user")
+                        .put("content", new JSONArray()
+                                .put(new JSONObject()
+                                        .put("type", "text")
+                                        .put("text", require))
+                                .put(new JSONObject()
+                                        .put("type", "image_url")
+                                        .put("image_url", new JSONObject()
+                                                .put("url", https)
+                                                .put("detail", highQuality ? "high" : "low"))));
+                return userObject;
+            } else {
+                return null;
+            }
+
+    }
+
     private JSONObject propertie_toolComponent(String[] name,String[] description,int qua) throws JSONException {
         JSONObject toolComponent = new JSONObject();
         JSONObject toolComponentFig = new JSONObject();
@@ -62,7 +107,7 @@ public class JsonMessageTool {
                 toolComponentFig
                         .put("type", "string")
                         .put("description", description[q]);
-            toolComponent.put(name[q],toolComponentFig) ;
+                toolComponent.put(name[q],toolComponentFig);
         }
         return toolComponent;
     }
@@ -72,7 +117,7 @@ public class JsonMessageTool {
     GPTTools(名稱,功能,GPT回傳項目名稱,項目功能)
     ※名稱與項目數量要相同，否則返回IllegalStateException
     * */
-    public JSONObject GPTTools_Post(String toolName,String description,String[] p_TCN,String[] p_TCD) throws JSONException{//每種功能就用一種函數去定義
+    public JSONObject GPTTools_Post(String functionName,String description,String[] p_TCN,String[] p_TCD) throws JSONException{//每種功能就用一種函數去定義
         //propertie_toolComponentName
         //propertie_toolComponentDescription
         if(p_TCD.length == p_TCN.length) {
@@ -80,16 +125,42 @@ public class JsonMessageTool {
             JSONObject toolObject = new JSONObject()
                     .put("type", "function")
                     .put("function", new JSONObject()
-                            .put("name", toolName)
+                            .put("name", functionName)
                             .put("description", description)
                             .put("parameters", new JSONObject()
                                     .put("type", "object")
                                     .put("properties",
                                             propertie_toolComponent(p_TCN, p_TCD, quantity)
                                     )
-                                    .put("required", new JSONArray()
-                                            .put("mood")
-                                            .put("contextOfMood"))
+                            )
+                    );
+            return toolObject;
+        }else {
+            throw new IllegalStateException("GPT toolComponent quentity error");
+        }
+    }
+
+    public JSONObject GPTTools_Post(String functionName,String description,String[] p_TCN,String[] p_TCD,String[] requiredTCN) throws JSONException{//每種功能就用一種函數去定義
+        //帶有必要項選擇的版本
+        //propertie_toolComponentName
+        //propertie_toolComponentDescription
+        JSONArray requiredComponemt = new JSONArray();
+        for(int i = 0;i < requiredTCN.length;i++) {
+            requiredComponemt.put(requiredTCN[i]);
+        }
+        if(p_TCD.length == p_TCN.length) {
+            int quantity = p_TCN.length;//propertie_toolComponenQuantity
+            JSONObject toolObject = new JSONObject()
+                    .put("type", "function")
+                    .put("function", new JSONObject()
+                            .put("name", functionName)
+                            .put("description", description)
+                            .put("parameters", new JSONObject()
+                                    .put("type", "object")
+                                    .put("properties",
+                                            propertie_toolComponent(p_TCN, p_TCD, quantity)
+                                    )
+                                    .put("required",requiredComponemt)
                             )
                     );
             return toolObject;
@@ -152,7 +223,9 @@ public class JsonMessageTool {
                         JSONObject args = new JSONObject(function.getString("arguments"));
                         for (int k = 0; k < componentName.length; k++) {
                                 toolResponse.put(componentName[k], args.optString(componentName[k],"noData"));
+                                Log.d("response debug",functionName + " " + componentName[k] + " " + args.optString(componentName[k],"noData"));
                         }
+                        toolResponse.put("arguments",function.getString("arguments"));
                     }else if (!function.has("arguments")) {
                         throw new IllegalStateException("GPT API Responsent function error");
                     }
@@ -186,7 +259,7 @@ public class JsonMessageTool {
                 if (body != null) {
                     responseBody = body.string();
                 }
-                Log.i("GPT post","初始角色設定推送成功");
+                Log.i("GPT post","JSON數據交換成功");
             }
         }catch (SocketTimeoutException e){
             throw new RuntimeException("net串流異常\n" + e);
@@ -210,6 +283,36 @@ public class JsonMessageTool {
         return firstChoice.getJSONObject("message");
     }
 
+    public String jsonPostAndResponseOraginResult(Request request, OkHttpClient client) throws JSONException {
+        String responseBody = null;
+        try (Response responseSet = client.newCall(request).execute()) {
+
+            if (!responseSet.isSuccessful()) {
+                Log.e("GPT post", "HTTP錯誤碼: " + responseSet.code());
+                if (responseBody != null) {
+                    Log.e("GPT post", "錯誤回傳內容: " + responseSet);
+                } else if (responseBody == null || responseBody.trim().isEmpty()) {// ✅ response 成功但空內容
+                    Log.d("GPT post", "API 回傳為空 回傳資訊:\n" + responseSet);
+                    throw new RuntimeException("API 回傳為空，請確認網路或參數\n" + responseSet);
+                } else {
+                    Log.e("GPT post", "錯誤但無內容回傳");
+//                    responseBody = "{\"error\": \"空內容\"}";
+                }
+                throw new RuntimeException("API 回傳錯誤（" + responseSet.code() + "）");
+            } else if (responseSet.isSuccessful()) {
+                ResponseBody body = responseSet.body();
+                if (body != null) {
+                    responseBody = body.string();
+                }
+                Log.i("GPT post", "JSON數據交換成功");
+            }
+        } catch (SocketTimeoutException e) {
+            throw new RuntimeException("net串流異常\n" + e);
+        } catch (IOException e) {
+            throw new RuntimeException("檔案處理異常\n" + e);
+        }
+        return responseBody;
+    }
     /*
     * String toolsFeedBack(
     *   toolName：運行的tool工具名稱,
@@ -219,17 +322,17 @@ public class JsonMessageTool {
     *   GPTModel：運行的GPT版本，為了未來可能會使用到高版本功能預留的項目,
     *   API_URL & API_KEY：post的必要資訊
     *   OkHttpClient client：建構GPT的JSON restful message必要套件
-    * */
+    */
     public String toolsFeedBack
-            (String toolName,String arguments,String resId,String functionFeedBack,String GPTModel,String API_URL,String API_KEY,OkHttpClient client) throws IOException, JSONException  {
+            (String functionName,String arguments,String resId,String functionFeedBack,String GPTModel,String API_URL,String API_KEY,OkHttpClient client,Context context) throws IOException, JSONException  {
         JSONObject messageObjectTool = new JSONObject()
                 .put("role","tool")
                 .put("tool_call_id",resId)
-                .put("name",toolName)
+                .put("name",functionName)
                 .put("content",functionFeedBack);//執行工具之後得到的結果回傳給GPT
 
         JSONObject funtion = new JSONObject()
-                .put("name",toolName)
+                .put("name",functionName)
                 .put("arguments",arguments);//捕捉到的啟動function的元素
 
         JSONObject ToolCalls = new JSONObject()
@@ -243,11 +346,14 @@ public class JsonMessageTool {
                         .put(ToolCalls))
                 .put("content",null);
 
+        JSONObject messageObjectSystem = systemObject(new ClientFileIO().getRoleSet(context));
+
         JSONObject jsonSet = new JSONObject()
                 .put("model", GPTModel) // 或 "gpt-3.5-turbo"
                 .put("messages", new org.json.JSONArray()
                         .put(messageObjectAssistant)
-                        .put(messageObjectTool));
+                        .put(messageObjectTool)
+                        .put(messageObjectSystem));
 
         RequestBody bodySet = RequestBody.create(
                 jsonSet.toString(),
@@ -270,8 +376,8 @@ public class JsonMessageTool {
             content = "系統：回應不存在";
         }
 
-        Log.i("GPT Response","mixed tool content: " + content);
         Log.i("GPT post","In Object In tool\n" + jsonSet);
+        Log.i("GPT Response","mixed tool content: " + content);
         Log.i("chat state","tool feedback");
         return content;
     }

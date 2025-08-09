@@ -1,4 +1,6 @@
-package com.example.attendant_project.time_task;
+package com.example.attendant_project.fragment_manager;
+
+import static android.app.Activity.RESULT_OK;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -9,9 +11,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
@@ -23,10 +26,18 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 
 import com.example.attendant_project.R;
+import com.example.attendant_project.time_task.AlarmReceiver;
+import com.example.attendant_project.time_task.CallAlarm;
+import com.example.attendant_project.time_task.PeriodicTaskHandler;
+import com.example.attendant_project.time_task.PrefsManager;
+import com.example.attendant_project.time_task.TextControler;
+import com.example.attendant_project.time_task.TextWatcher;
+import com.example.attendant_project.time_task.ToggleCountdownController;
+import com.example.attendant_project.time_task.UsageDocControl;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -38,9 +49,8 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 
-
-public class TimeTaskLayout extends AppCompatActivity {
-    /*
+public class TimeTaskFragment extends Fragment {
+        /*
     功能：
     1.獲取現在時間並顯示
     2.按下按鈕設定時間
@@ -62,38 +72,41 @@ public class TimeTaskLayout extends AppCompatActivity {
     EditText ett_timeSave;
     CheckedTextView ctv_releaseTime;
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.timetask_layout, container, false);
+    }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onViewCreated(View view,@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.timetask_layout);
-        tv_timeNow = findViewById(R.id.tv_current_time);
-        tv_target_time = findViewById(R.id.tv_target_time);
-        btn_timeSet = findViewById(R.id.btn_set_time);
-        btn_timeSetRestore = findViewById(R.id.btn_time_restore);
-        btn_musicSet = findViewById(R.id.btn_custom_ringtone);
-        tv_remaining_time = findViewById(R.id.tv_remaining_time);
-        swt_alarm_set = findViewById(R.id.swt_alarm_set);
-        tv_ringtone1 = findViewById(R.id.tv_ringtone1);
-        btn_timeCostSet = findViewById(R.id.btn_timeCostSet);
-        et_taskName = findViewById(R.id.et_taskName);
-        et_taskDetailExcept = findViewById(R.id.et_taskDetailExcept);
-        et_taskDetailRealize = findViewById(R.id.et_taskDetailRealize);
-        et_taskDetailReplenish = findViewById(R.id.et_taskDetailReplenish);
-        btn_taskconfirm = findViewById(R.id.btn_taskconfirm);
-        tv_costedTime = findViewById(R.id.tv_costedTime);
-        btn_outPutFile = findViewById(R.id.btn_outPutFile);
-        btn_usage = findViewById(R.id.btn_usage);
-        btn_clear = findViewById(R.id.btn_clear);
-        btn_sample = findViewById(R.id.btn_sample);
-        btn_timeSaver = findViewById(R.id.btn_timeSaver);
-        ett_timeSave = findViewById(R.id.ett_timeSave);
-        ctv_releaseTime = findViewById(R.id.ctv_releaseTime);
+        tv_timeNow = view.findViewById(R.id.tv_current_time);
+        tv_target_time = view.findViewById(R.id.tv_target_time);
+        btn_timeSet = view.findViewById(R.id.btn_set_time);
+        btn_timeSetRestore = view.findViewById(R.id.btn_time_restore);
+        btn_musicSet = view.findViewById(R.id.btn_custom_ringtone);
+        tv_remaining_time = view.findViewById(R.id.tv_remaining_time);
+        swt_alarm_set = view.findViewById(R.id.swt_alarm_set);
+        tv_ringtone1 = view.findViewById(R.id.tv_ringtone1);
+        btn_timeCostSet = view.findViewById(R.id.btn_timeCostSet);
+        et_taskName = view.findViewById(R.id.et_taskName);
+        et_taskDetailExcept = view.findViewById(R.id.et_taskDetailExcept);
+        et_taskDetailRealize = view.findViewById(R.id.et_taskDetailRealize);
+        et_taskDetailReplenish = view.findViewById(R.id.et_taskDetailReplenish);
+        btn_taskconfirm = view.findViewById(R.id.btn_taskconfirm);
+        tv_costedTime = view.findViewById(R.id.tv_costedTime);
+        btn_outPutFile = view.findViewById(R.id.btn_outPutFile);
+        btn_usage = view.findViewById(R.id.btn_usage);
+        btn_clear = view.findViewById(R.id.btn_clear);
+        btn_sample = view.findViewById(R.id.btn_sample);
+        btn_timeSaver = view.findViewById(R.id.btn_timeSaver);
+        ett_timeSave = view.findViewById(R.id.ett_timeSave);
+        ctv_releaseTime = view.findViewById(R.id.ctv_releaseTime);
 
         TextWatcher textWatcher = new TextWatcher();
 
         // 找到根佈局 將焦點從editText改往版面的 rootLayout
-        ConstraintLayout layout = findViewById(R.id.root_layout);
+        ConstraintLayout layout = view.findViewById(R.id.root_layout);
         layout.setFocusableInTouchMode(true);
         layout.requestFocus();
 
@@ -117,18 +130,18 @@ public class TimeTaskLayout extends AppCompatActivity {
 
 //        ZonedDateTime defaultTimeSet = ZonedDateTime.now(ZoneId.of("Asia/Taipei")); //測試用
         ZonedDateTime defaultTimeSet = ZonedDateTime.now(); //實際時區依照裝置
-            setTime[0] = defaultTimeSet.getHour();
-            setTime[1] = defaultTimeSet.getMinute();
-            setTime[2] = 0;//初始化設定時間
-            Log.i("初始化設定", "設定時間 " + setTime[0] + ":" + setTime[1] + ":" + setTime[2]);
-            int hourRestore = PrefsManager.getTimeSet(getApplicationContext(), "Hour", -1);
-            int minuteRestore = PrefsManager.getTimeSet(getApplicationContext(), "Minute", -1);
-            if(PrefsManager.getTimeSet(getApplicationContext(),"Hour",-1) == -1 || PrefsManager.getTimeSet(getApplicationContext(),"Minute",-1) == -1){
-                btn_timeSetRestore.setText("＜＜復原  : 無紀錄");
-            }else{
-                btn_timeSetRestore.setText("＜＜復原  " + hourRestore + ":" + minuteRestore);
-                Log.i("初始化設定", "檢視紀錄時間 " + hourRestore + ":" + hourRestore + ":" + setTime[2]);
-                }
+        setTime[0] = defaultTimeSet.getHour();
+        setTime[1] = defaultTimeSet.getMinute();
+        setTime[2] = 0;//初始化設定時間
+        Log.i("初始化設定", "設定時間 " + setTime[0] + ":" + setTime[1] + ":" + setTime[2]);
+        int hourRestore = PrefsManager.getTimeSet(requireContext().getApplicationContext(), "Hour", -1);
+        int minuteRestore = PrefsManager.getTimeSet(requireContext().getApplicationContext(), "Minute", -1);
+        if(PrefsManager.getTimeSet(requireContext().getApplicationContext(),"Hour",-1) == -1 || PrefsManager.getTimeSet(requireContext().getApplicationContext(),"Minute",-1) == -1){
+            btn_timeSetRestore.setText("＜＜復原  : 無紀錄");
+        }else{
+            btn_timeSetRestore.setText("＜＜復原  " + hourRestore + ":" + minuteRestore);
+            Log.i("初始化設定", "檢視紀錄時間 " + hourRestore + ":" + hourRestore + ":" + setTime[2]);
+        }
 
 //        ZonedDateTime defaultTimeSet = ZonedDateTime.now(ZoneId.of("Asia/Taipei")); //測試用
 //            setTime[0] = defaultTimeSet.getHour();
@@ -137,7 +150,7 @@ public class TimeTaskLayout extends AppCompatActivity {
 //            Log.i("初始化設定", "設定時間 " + setTime[0] + ":" + setTime[1] + ":" + setTime[2]);
 
         //** 設置固定背景程序計算時間差
-        periodicTaskHandler = new PeriodicTaskHandler(this.getApplicationContext());
+        periodicTaskHandler = new PeriodicTaskHandler(requireContext().getApplicationContext());
         periodicTaskHandler.getTimeTask(tv_remaining_time);
         periodicTaskHandler.setCurrentTimeView(tv_timeNow);
         periodicTaskHandler.setTaskTime(setTime,false);
@@ -146,26 +159,26 @@ public class TimeTaskLayout extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(swt_alarm_set.isChecked() != true) {
-                    TimePickerDialog timePickerDialog = new TimePickerDialog(TimeTaskLayout.this,new TimePickerDialog.OnTimeSetListener() {
+                    TimePickerDialog timePickerDialog = new TimePickerDialog(requireContext(),new TimePickerDialog.OnTimeSetListener() {
                         @Override
                         public void onTimeSet(TimePicker view, int Hour, int Minute) {
 
-                                setTime[0] = Hour;
-                                setTime[1] = Minute;
-                                setTime[2] = 0;
-                                switchChecke = true;
-                                periodicTaskHandler.setTaskTime(setTime, switchChecke);
-                                PrefsManager.putTimeSet(getApplicationContext(), "Hour", Hour);
-                                PrefsManager.putTimeSet(getApplicationContext(), "Minute", Minute);
-                                timeSetMemery = "設定時間：" + setTime[0] + ":" + setTime[1];
+                            setTime[0] = Hour;
+                            setTime[1] = Minute;
+                            setTime[2] = 0;
+                            switchChecke = true;
+                            periodicTaskHandler.setTaskTime(setTime, switchChecke);
+                            PrefsManager.putTimeSet(requireContext().getApplicationContext(), "Hour", Hour);
+                            PrefsManager.putTimeSet(requireContext().getApplicationContext(), "Minute", Minute);
+                            timeSetMemery = "設定時間：" + setTime[0] + ":" + setTime[1];
                             tv_target_time.setText(timeSetMemery);
-                                btn_timeSetRestore.setText("＜＜復原  " + hourRestore + ":" + minuteRestore);
+                            btn_timeSetRestore.setText("＜＜復原  " + hourRestore + ":" + minuteRestore);
 
                         }
                     },nowHour,nowMinute,true);
                     timePickerDialog.show();
-                    }else{
-                        Toast.makeText(getApplicationContext(),"任務進行中 時間設定被鎖定",Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(requireContext().getApplicationContext(),"任務進行中 時間設定被鎖定",Toast.LENGTH_SHORT).show();
                 }
             }
         });//設定Alarm時間
@@ -174,23 +187,23 @@ public class TimeTaskLayout extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(swt_alarm_set.isChecked() != true) {
-                    if (PrefsManager.getTimeSet(getApplicationContext(), "Hour", -1) != -1 && PrefsManager.getTimeSet(getApplicationContext(), "Minute", -1) != -1) {
-                        setTime[0] = PrefsManager.getTimeSet(getApplicationContext(), "Hour", -1);
-                        setTime[1] = PrefsManager.getTimeSet(getApplicationContext(), "Minute", -1);
+                    if (PrefsManager.getTimeSet(requireContext().getApplicationContext(), "Hour", -1) != -1 && PrefsManager.getTimeSet(requireContext().getApplicationContext(), "Minute", -1) != -1) {
+                        setTime[0] = PrefsManager.getTimeSet(requireContext().getApplicationContext(), "Hour", -1);
+                        setTime[1] = PrefsManager.getTimeSet(requireContext().getApplicationContext(), "Minute", -1);
                         setTime[2] = 0;
                         switchChecke = true;
                         periodicTaskHandler.setTaskTime(setTime, switchChecke);
                         tv_target_time.setText("設定時間：" + setTime[0] + ":" + setTime[1]);
                     } else {
-                        Toast.makeText(getApplicationContext(), "沒有紀錄", Toast.LENGTH_SHORT);
+                        Toast.makeText(requireContext().getApplicationContext(), "沒有紀錄", Toast.LENGTH_SHORT);
                     }
                 }else{
-                    Toast.makeText(getApplicationContext(),"任務進行中 時間設定被鎖定",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext().getApplicationContext(),"任務進行中 時間設定被鎖定",Toast.LENGTH_SHORT).show();
                 }
             }
         });//設定Alarm時間為記錄時間
 
-        callAlarm = new CallAlarm(TimeTaskLayout.this);
+        callAlarm = new CallAlarm(requireContext());
         swt_alarm_set.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -201,12 +214,12 @@ public class TimeTaskLayout extends AppCompatActivity {
                         buttonView.setChecked(false);
 
                         // 可選：提示使用者為什麼不能開啟
-                        Toast.makeText(getApplicationContext(), "設定時間後可使用", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext().getApplicationContext(), "設定時間後可使用", Toast.LENGTH_SHORT).show();
                     }else{
                         theLessTime = periodicTaskHandler.getTheLess();//獲取倒計時器剩餘時間
                         Log.i("從switch投給Alarm設定時間",String.valueOf(theLessTime));
                         callAlarm.switchOn(theLessTime);
-                        btn_timeSetRestore.setText("＜＜復原  " + PrefsManager.getTimeSet(getApplicationContext(),"Hour",-1)+":"+ PrefsManager.getTimeSet(getApplicationContext(),"Minute",-1));
+                        btn_timeSetRestore.setText("＜＜復原  " + PrefsManager.getTimeSet(requireContext().getApplicationContext(),"Hour",-1)+":"+ PrefsManager.getTimeSet(requireContext().getApplicationContext(),"Minute",-1));
                     }
                 }else if(isChecked == false){
                     switchChecke = false;
@@ -237,10 +250,10 @@ public class TimeTaskLayout extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(swt_alarm_set.isChecked() && periodicTaskHandler.getTaskState()) {
-                cost = periodicTaskHandler.getTimeCost();
-                Log.i("costTime costTime comfirm",cost[0] + " " + cost[1]);
-                costTotal = cost[0] + cost[1];
-                new PeriodicTaskHandler(TimeTaskLayout.this);
+                    cost = periodicTaskHandler.getTimeCost();
+                    Log.i("costTime costTime comfirm",cost[0] + " " + cost[1]);
+                    costTotal = cost[0] + cost[1];
+                    new PeriodicTaskHandler(requireContext());
 
                     if(costTotal < 1){
                         tv_costedTime.setText("總花費不足1分鐘");
@@ -248,7 +261,7 @@ public class TimeTaskLayout extends AppCompatActivity {
                         tv_costedTime.setText("總花費 " + costTotal + " 分鐘");
                     }
 
-                    textWatcher.timeInfoSave(TimeTaskLayout.this, "costTimeInfo", Integer.toString(costTotal), Integer.toString(cost[1]), timeSetMemery);//把確認的時間拋出去紀錄
+                    textWatcher.timeInfoSave(requireContext(), "costTimeInfo", Integer.toString(costTotal), Integer.toString(cost[1]), timeSetMemery);//把確認的時間拋出去紀錄
 
                     periodicTaskHandler.setTaskState(false);
                     tv_costedTime.setVisibility(View.VISIBLE);
@@ -262,7 +275,7 @@ public class TimeTaskLayout extends AppCompatActivity {
                     btn_timeSet.setClickable(true);
                     periodicTaskHandler.allValueReset();
                 }else{
-                    Toast.makeText(TimeTaskLayout.this,"任務尚未開始",Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext().getApplicationContext(),"任務尚未開始",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -271,9 +284,9 @@ public class TimeTaskLayout extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(periodicTaskHandler.getCostTimeSwitchCheck(0) || periodicTaskHandler.getCostTimeSwitchCheck(1)){
-                    Toast.makeText(getApplicationContext(),"任務運作中，無法更改時間",Toast.LENGTH_LONG);
+                    Toast.makeText(requireContext().getApplicationContext(),"任務運作中，無法更改時間",Toast.LENGTH_LONG);
                 }else {
-                    showInputDialog(TimeTaskLayout.this, new InputCallback() {
+                    showInputDialog(requireContext(), new TimeTaskFragment.InputCallback() {
                         @Override
                         public void onInputConfirmed(String input) {
                             // 這裡是 callback 被執行的地方
@@ -292,23 +305,23 @@ public class TimeTaskLayout extends AppCompatActivity {
 
         EditText editTextPage[] = new EditText[]{et_taskName,et_taskDetailExcept,et_taskDetailRealize,et_taskDetailReplenish};
 
-        for(int i=0;i<=3;i++) {textWatcher.readTextFromFile(TimeTaskLayout.this, i, editTextPage);}//軟體啟動時還原紀錄的EditText訊息
-        textWatcher.setupDebouncedWatcher(TimeTaskLayout.this,editTextPage);//監視EditText的內容變更
+        for(int i=0;i<=3;i++) {textWatcher.readTextFromFile(requireContext(), i, editTextPage);}//軟體啟動時還原紀錄的EditText訊息
+        textWatcher.setupDebouncedWatcher(requireContext(),editTextPage);//監視EditText的內容變更
 
 
         btn_outPutFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    Intent outPutIntent = new Intent(TimeTaskLayout.this,TextControler.class);//建立並啟動存檔
-                    outPutIntent.putExtra("TIME_INFO",textWatcher.getTimeInfo());
-                    startActivity(outPutIntent);
+                Intent outPutIntent = new Intent(requireContext(), TextControler.class);//建立並啟動存檔
+                outPutIntent.putExtra("TIME_INFO",textWatcher.getTimeInfo());
+                startActivity(outPutIntent);
             }
         });
 
         btn_usage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(TimeTaskLayout.this, UsageDocControl.class);
+                Intent intent = new Intent(requireContext(), UsageDocControl.class);
                 startActivity(intent);
             }
         });
@@ -316,7 +329,7 @@ public class TimeTaskLayout extends AppCompatActivity {
         btn_clear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(TimeTaskLayout.this)
+                new AlertDialog.Builder(requireContext())
                         .setMessage("清除後無法還原")
                         .setNegativeButton("取消",null)
                         .setPositiveButton("清除任務內容", new DialogInterface.OnClickListener() {
@@ -330,7 +343,7 @@ public class TimeTaskLayout extends AppCompatActivity {
                                 et_taskDetailRealize.setText(null);
                                 et_taskDetailReplenish.setText(null);
                                 tv_costedTime.setText(null);
-                                new TextWatcher().clearTheInfo(TimeTaskLayout.this);
+                                new TextWatcher().clearTheInfo(requireContext());
                             }
                         })
                         .setNeutralButton("清除儲存時間", new DialogInterface.OnClickListener() {
@@ -346,7 +359,7 @@ public class TimeTaskLayout extends AppCompatActivity {
         btn_sample.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(TimeTaskLayout.this)
+                new AlertDialog.Builder(requireContext())
                         .setMessage("是否設定為＂補充內容＂之範本")
                         .setNegativeButton("取消",null)
                         .setPositiveButton("確定", new DialogInterface.OnClickListener() {
@@ -354,7 +367,7 @@ public class TimeTaskLayout extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 StringBuilder builder = new StringBuilder();
                                 try {
-                                    FileOutputStream fos = TimeTaskLayout.this.openFileOutput("sample", Context.MODE_PRIVATE);
+                                    FileOutputStream fos = requireContext().openFileOutput("sample", Context.MODE_PRIVATE);
                                     fos.write(String.valueOf(et_taskDetailReplenish.getText()).getBytes(StandardCharsets.UTF_8));
                                     fos.flush();
                                 } catch (IOException e) {
@@ -366,7 +379,7 @@ public class TimeTaskLayout extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 StringBuilder builder = new StringBuilder();
-                                try (FileInputStream fis = TimeTaskLayout.this.openFileInput("sample");
+                                try (FileInputStream fis = requireContext().openFileInput("sample");
                                      BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
                                     String line;
                                     while ((line = reader.readLine()) != null) {
@@ -390,11 +403,11 @@ public class TimeTaskLayout extends AppCompatActivity {
         void onInputConfirmed(String input);
     }
 
-    public void showInputDialog(Context context, InputCallback callback) {//實例化呼叫dialog傳值得功能
+    public void showInputDialog(Context context, TimeTaskFragment.InputCallback callback) {//實例化呼叫dialog傳值得功能
         EditText input = new EditText(context);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
 
-        new AlertDialog.Builder(TimeTaskLayout.this)
+        new AlertDialog.Builder(requireContext())
                 .setTitle("輸入預計花費時間")
                 .setMessage("分鐘為單位")
                 .setView(input)
@@ -411,19 +424,18 @@ public class TimeTaskLayout extends AppCompatActivity {
 
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {//接收呼叫檔案選擇器的回傳
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {//接收呼叫檔案選擇器的回傳
         super.onActivityResult(requestCode, resultCode, data);
-        AlarmReceiver alarmReceiver = new AlarmReceiver();
         Uri uriSet = null;
         if(requestCode == 0) {
             if (resultCode == RESULT_OK && data != null) {
                 uriSet = data.getData();
-                PrefsManager.putMusicSet(getApplicationContext(),"customization_music",uriSet.toString());
+                PrefsManager.putMusicSet(requireContext().getApplicationContext(),"customization_music",uriSet.toString());
                 // 取得並保留 URI 存取權限
                 @SuppressLint("WrongConstant")
                 final int takeFlags = data.getFlags() &
                         (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);//取得久持權限
-                TimeTaskLayout.this.getContentResolver().takePersistableUriPermission(uriSet, takeFlags);
+                requireContext().getContentResolver().takePersistableUriPermission(uriSet, takeFlags);
 
 
 
@@ -443,11 +455,11 @@ public class TimeTaskLayout extends AppCompatActivity {
 
 
     protected void setTv_ringtone(){
-        if("unknow".equals( PrefsManager.getMusicSet(getApplicationContext(),"customization_music","unknow"))){
+        if("unknow".equals( PrefsManager.getMusicSet(requireContext().getApplicationContext(),"customization_music","unknow"))){
             tv_ringtone1.setText("預設鈴聲");
         }else{
             try {//將路徑轉換成UTF-8，用字串解碼器將尾串交給String
-                String path = PrefsManager.getMusicSet(getApplicationContext(), "customization_music", "unknow");
+                String path = PrefsManager.getMusicSet(requireContext().getApplicationContext(), "customization_music", "unknow");
                 String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8.name());
                 String pathPick = decodedPath.substring(decodedPath.lastIndexOf("/") + 1);
                 tv_ringtone1.setText(pathPick);
@@ -460,31 +472,28 @@ public class TimeTaskLayout extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
+    public void onStart() {
         super.onStart();
         periodicTaskHandler.start();
     }
 
     @Override
-    protected  void onResume() {
+    public void onResume() {
         super.onResume();
 
     }
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         super.onStop();
         periodicTaskHandler.stop();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         periodicTaskHandler.release();
     }
 
 
 }
-
-
-

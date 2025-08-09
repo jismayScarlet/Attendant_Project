@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 類別選單 -->
+
+    <!-- 新增類別按鈕 -->
+
+    <!-- 輸入方式：照片 -->
+
+    <!-- 輸入方式：語音 -->
+
+    <!-- 輸入方式：鍵盤 -->
+
+    <ImageButton
+        android:id="@+id/btn_categoryManager"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:backgroundTint="@android:color/darker_gray"
+        android:contentDescription="管理類別"
+        android:src="@android:drawable/ic_menu_manage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_voiceInputInBuddy"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        android:text="語音新增"
+        app:layout_constraintEnd_toStartOf="@+id/btn_text_input"
+        app:layout_constraintStart_toEndOf="@+id/btn_photo_input"
+        app:layout_constraintTop_toTopOf="@+id/btn_photo_input" />
+
+    <Button
+        android:id="@+id/btn_photo_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="5dp"
+        android:text="拍照新增"
+        app:layout_constraintEnd_toStartOf="@+id/btn_voiceInputInBuddy"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spi_categoryList" />
+
+    <!-- 事件紀錄欄位 -->
+
+    <!-- 設定 / 編輯按鈕 -->
+
+    <Button
+        android:id="@+id/btn_text_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        android:text="文字新增"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_voiceInputInBuddy"
+        app:layout_constraintTop_toTopOf="@+id/btn_photo_input" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_events"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/btn_text_input"
+        app:layout_constraintStart_toStartOf="@+id/btn_photo_input"
+        app:layout_constraintTop_toBottomOf="@+id/btn_photo_input" />
+
+<!--    <LinearLayout-->
+<!--        android:id="@+id/eventContainer"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="40dp"-->
+<!--        android:layout_marginStart="5dp"-->
+<!--        android:layout_marginTop="10dp"-->
+<!--        android:layout_marginEnd="5dp"-->
+<!--        android:orientation="vertical"-->
+<!--        app:layout_constraintEnd_toEndOf="@+id/btn_keyboard_input"-->
+<!--        app:layout_constraintStart_toStartOf="@+id/btn_photo_input"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/btn_photo_input" />-->
+
+    <Spinner
+        android:id="@+id/spi_categoryList"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintEnd_toStartOf="@+id/btn_categoryManager"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

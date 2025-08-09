@@ -22,7 +22,6 @@ public class CommandInputViewControler extends Activity {
     TextView tv_allMessage;
     Button btn_confireAndSend,btn_stopChatAndClear;
     ScrollView scrollView;
-    Intent intent = getIntent();
     String assisPrefs_name = null;
     String[] assistannameFile = null;
 
@@ -36,9 +35,11 @@ public class CommandInputViewControler extends Activity {
         btn_stopChatAndClear = findViewById(R.id.btn_stopChatAndClear);
         findViewById(R.id.cii_fragment).requestFocus();
         scrollView = findViewById(R.id.scrollView);
+        Intent intent = getIntent();
         assisPrefs_name = intent.getStringExtra("assisPrefs_name");
         assistannameFile = intent.getStringArrayExtra("assistannameFile");
 
+        tv_allMessage.setText("輸入\"清單\"獲取命令總覽");
         setBtn_stopChatAndClear();
         setBtn_confireAndSend();
         chatBoxPushDownEnterKey();
@@ -66,6 +67,7 @@ public class CommandInputViewControler extends Activity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 finish();
+                                Command.setENDOW(false);
                             }
                         })
                         .setNegativeButton("No", new DialogInterface.OnClickListener() {

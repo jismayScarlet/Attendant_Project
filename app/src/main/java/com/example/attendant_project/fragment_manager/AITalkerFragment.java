@@ -1,8 +1,9 @@
-package com.example.attendant_project.chatgpt_conectort;
+package com.example.attendant_project.fragment_manager;
+
+import static android.app.Activity.RESULT_OK;
 
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,7 +17,9 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -25,47 +28,57 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.example.attendant_project.R;
+import com.example.attendant_project.chatgpt_conectort.ChatGPTClient;
+import com.example.attendant_project.chatgpt_conectort.ClientFileIO;
+import com.example.attendant_project.chatgpt_conectort.MemoryOrganizer;
+import com.example.attendant_project.time_task.PrefsManager;
 
 import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class AITalkerLayout extends AppCompatActivity {
-    Context context = AITalkerLayout.this;
+public class AITalkerFragment extends Fragment {
     private EditText et_chatBox;
     TextView tv_allMessage;
     Button btn_confireAndSend,btn_stopChatAndClear,btn_voiceInput,btn_postLog;
 
-    CheckBox cb_tts,cb_LongMemery;
+    CheckBox cb_tts, cb_LongMemory;
 
     HandlerThread AITalkerThread = new HandlerThread("AITalkerThread");//創建一個副thread
+    private final String checkBox_prefsName = "checkBoxSetting";
     private Handler handler;
     private Handler handler2;
     private Runnable inputFinishedRunnable;
     ScrollView scrollView;
     TextToSpeech tts;
     String voiceRecognizer;
-    MemoryOrganizer mo = new MemoryOrganizer(AITalkerLayout.this);
-
+    MemoryOrganizer mo = null;
+    private static String lastString = "",nowString = "";
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.llm_talker_layout, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view,@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.llm_talker_layout);
-        et_chatBox = findViewById(R.id.et_chatBox);
-        tv_allMessage = findViewById(R.id.tv_chatLog);
-        btn_confireAndSend = findViewById(R.id.btn_confireAndSend);
-        btn_stopChatAndClear = findViewById(R.id.btn_stopChatAndClear);
-        btn_voiceInput = findViewById(R.id.btn_voiceInput);
-        btn_postLog = findViewById(R.id.btn_postLog);
-        cb_tts = findViewById(R.id.cb_tts);
-        cb_LongMemery = findViewById(R.id.cb_longMemery);
-        findViewById(R.id.constraintlayout).requestFocus();
-        scrollView = findViewById(R.id.scrollView);
+        mo = new MemoryOrganizer(requireContext());
+        et_chatBox = view.findViewById(R.id.et_chatBox);
+        tv_allMessage = view.findViewById(R.id.tv_chatLog);
+        btn_confireAndSend = view.findViewById(R.id.btn_confireAndSend);
+        btn_stopChatAndClear = view.findViewById(R.id.btn_stopChatAndClear);
+        btn_voiceInput = view.findViewById(R.id.btn_voiceInput);
+        btn_postLog = view.findViewById(R.id.btn_postLog);
+        cb_tts = view.findViewById(R.id.cb_tts);
+        cb_LongMemory = view.findViewById(R.id.cb_longMemery);
+        view.findViewById(R.id.constraintlayout).requestFocus();
+        scrollView = view.findViewById(R.id.scrollView);
 
         AITalkerThread.start();//要先啟動才能拿到looper
         handler = new Handler(AITalkerThread.getLooper());//如果Hanlder(這邊使用getMAinLooper會得到主Thread
@@ -73,7 +86,8 @@ public class AITalkerLayout extends AppCompatActivity {
         handler.post(inputFinishedRunnable);
         handler2.post(checkGPTRespone);
 
-        tv_allMessage.setText(new ClientFileIO().readTextFromFile(AITalkerLayout.this));Log.d("talker box", "過往紀錄初始完畢");
+        tv_allMessage.setText(new ClientFileIO().readTextFromFile(requireContext()));
+        Log.d("talker box", "過往紀錄初始完畢");
 
         chatBoxChangeWatcher();
 
@@ -87,13 +101,14 @@ public class AITalkerLayout extends AppCompatActivity {
         mo.logOrganize();
         mo.startOrganizer();
         longMemoryChecker();
+        checkBoxChange();
 
         scrollView.post(() -> {
             scrollView.smoothScrollTo(0, tv_allMessage.getBottom());
             Log.d("scroll","success");
         });
 
-        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+        tts = new TextToSpeech(requireContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
                 if (status == TextToSpeech.SUCCESS) {
@@ -116,7 +131,7 @@ public class AITalkerLayout extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         handler2.removeCallbacks(checkGPTRespone);
         AITalkerThread.quitSafely();
@@ -145,7 +160,7 @@ public class AITalkerLayout extends AppCompatActivity {
                     handler.removeCallbacks(inputFinishedRunnable);
                 }
                 inputFinishedRunnable = () -> {
-                    new ClientFileIO().saveTextToFile(context, s.toString());
+                    new ClientFileIO().saveTextToFile(requireContext(), s.toString());
 //                    Log.d("Talker box", "輸入完成: " + s.toString() + "\n");
 
                 };
@@ -182,25 +197,32 @@ public class AITalkerLayout extends AppCompatActivity {
     private void messageSend(){//統一呼叫傳輸方法
         String message;
         message = String.valueOf(et_chatBox.getText());
-        String nameTest = new ClientFileIO().readTextFromFile(AITalkerLayout.this,"AssistantName");
+        String nameTest = new ClientFileIO().getAssistantName(requireContext(),"assistantName","AssistantName","克莉絲蒂娜");
         if(!TextUtils.isEmpty(nameTest))
         {
-            tv_allMessage.append( "マスター：" + et_chatBox.getText() + "\n\n");//冠名 マスター：、結月ゆかり： 被鎖定，更改會影響到ClientFileReader取資料
+            tv_allMessage.append( "マスター：" + et_chatBox.getText() + "\n\n");//冠名 マスター： 被鎖定，更改會影響到ClientFileReader取資料
+            ChatGPTClient.sendMessage(requireContext(),message);
+        }else{
+            Toast.makeText(requireContext().getApplicationContext(),"助手名稱異常或未設定 系統重大異常",Toast.LENGTH_LONG).show();
         }
-        ChatGPTClient.sendMessage(this,message);
         et_chatBox.setText(null);
     }
 
 
     //////送出訊息
 
-    String lastString = "0",nowString = "1";
+
     int nothingToSay = 0;
     private Runnable checkGPTRespone = new Runnable() {
         @Override
         public void run() {
             if (ChatGPTClient.getResponed() != null) {
-                nowString = ChatGPTClient.getResponed();
+                String getPop = new MemoryOrganizer().getResultForChatLog();
+                if(getPop != null){
+                    nowString = getPop;
+                }else {
+                    nowString = ChatGPTClient.getResponed();
+                }
                 if (!lastString.equals(nowString) ) {
                     Log.d("GPT Response","at Thread response now=" + nowString + ",last=" + lastString);
                     Handler uiHandler = new Handler(Looper.getMainLooper());//丟回UI Thread
@@ -208,23 +230,25 @@ public class AITalkerLayout extends AppCompatActivity {
                         @Override
                         public void run() {
                             String nickName = null;
-                            nickName = new ClientFileIO().getAssistantName(AITalkerLayout.this,"assistantName","AssistantNickName","助手");
-                                tv_allMessage.append(nickName + "：" + nowString + "\n\n");
+                            nickName = new ClientFileIO().getAssistantName(requireContext(),"assistantName","AssistantNickName","助手");
+                            tv_allMessage.append(nickName + "：" + nowString + "\n\n");
                             try {if(cb_tts.isChecked()){ChatGPTClient.translateToJapen(nowString,tts);}}
                             catch (JSONException e) {throw new RuntimeException("GPT中翻日 JSON post 失敗" + e);}
 
                             Log.i("TTS","tts.isSpeaking " + tts.isSpeaking() + "\n" + ChatGPTClient.getTranslatedSentence());
-
                         }
                     });
-                    lastString = nowString;
-
+                    if(nowString.equals(getPop)){
+                        lastString = getPop;
+                    }else {
+                        lastString = nowString;
+                    }
                     // 延遲執行以等候 TextView 完成排版
                     // 滑動到底位置
 
                     scrollView.postDelayed(() -> {
-                    scrollView.smoothScrollTo(0, tv_allMessage.getBottom());
-                    Log.d("scroll","success");
+                        scrollView.smoothScrollTo(0, tv_allMessage.getBottom());
+                        Log.d("scroll","success");
                     },100);
                 }
             }
@@ -236,7 +260,7 @@ public class AITalkerLayout extends AppCompatActivity {
         btn_stopChatAndClear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(AITalkerLayout.this)
+                new AlertDialog.Builder(requireContext())
                         .setTitle("終止並清除現在的話題")
                         .setMessage("將無法復原，你確定嗎?")
                         .setNegativeButton("取消", null)
@@ -252,13 +276,13 @@ public class AITalkerLayout extends AppCompatActivity {
     }
 
     private void voiceInputSwitch(){
-     btn_voiceInput
-             .setOnClickListener(new View.OnClickListener() {
-                 @Override
-                 public void onClick(View v) {
-                     voiceInput();
-                 }
-             });
+        btn_voiceInput
+                .setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        voiceInput();
+                    }
+                });
 //             .setOnTouchListener(new View.OnTouchListener() {
 //         @Override
 //         public boolean onTouch(View v, MotionEvent event) {
@@ -277,12 +301,12 @@ public class AITalkerLayout extends AppCompatActivity {
         try {
             startActivityForResult(intent,01);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "您的裝置不支援語音輸入", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext().getApplicationContext(), "您的裝置不支援語音輸入", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == 01 && resultCode == RESULT_OK && data != null) {
@@ -298,42 +322,60 @@ public class AITalkerLayout extends AppCompatActivity {
     }
 
     public void postLog(){
-            btn_postLog.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    new AlertDialog.Builder(AITalkerLayout.this)
-                            .setTitle("對話紀錄送出")
-                            .setMessage("確定要將內容送往 任務工具 的 補充內容 嗎？")
-                            .setNegativeButton("取消", null)
-                            .setNeutralButton("送出後清除對話內容", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    new ClientFileIO().fileOverride(AITalkerLayout.this,"taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
-                                    tv_allMessage.setText(null);
-                                }
-                            })
-                            .setPositiveButton("送出", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    new ClientFileIO().fileOverride(AITalkerLayout.this,"taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
-                                }
-                            })
-                            .show();
-                }
-            });
+        btn_postLog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("對話紀錄送出")
+                        .setMessage("確定要將內容送往 任務工具 的 補充內容 嗎？")
+                        .setNegativeButton("取消", null)
+                        .setNeutralButton("送出後清除對話內容", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new ClientFileIO().fileOverride(requireContext(),"taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
+                                tv_allMessage.setText(null);
+                            }
+                        })
+                        .setPositiveButton("送出", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new ClientFileIO().fileOverride(requireContext(),"taskDetailReplenish", String.valueOf(tv_allMessage.getText()), 0, 0);
+                            }
+                        })
+                        .show();
+            }
+        });
     }
 
 
     private void longMemoryChecker(){
-        cb_LongMemery.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        cb_LongMemory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(cb_LongMemery.isChecked()) {
+                if(cb_LongMemory.isChecked()) {
                     mo.restart();//重新計時
                 }
-                else if (!cb_LongMemery.isChecked()) {
+                else if (!cb_LongMemory.isChecked()) {
                     mo.pauseOrangize();
                 }
+            }
+        });
+    }
+
+    private void checkBoxChange(){
+        cb_LongMemory.setChecked(PrefsManager.getBoolean(requireContext(),checkBox_prefsName,"longMemory",true));
+        cb_tts.setChecked(PrefsManager.getBoolean(requireContext(),checkBox_prefsName,"tts",true));
+        cb_LongMemory.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    PrefsManager.setBoolean(requireContext(),checkBox_prefsName,"longMemory",cb_LongMemory.isChecked());
+            }
+        });
+
+        cb_tts.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                PrefsManager.setBoolean(requireContext(),checkBox_prefsName,"tts",cb_tts.isChecked());
             }
         });
     }
