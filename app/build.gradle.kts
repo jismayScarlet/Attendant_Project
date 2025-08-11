@@ -76,7 +76,8 @@ dependencies {
 // 可選：使用 Room 在背景執行 Thread
     implementation ("androidx.room:room-common:2.6.1")
 
-    val camerax_version = "1.2.2"
+//    val camerax_version = "1.2.2"
+    val camerax_version = "1.5.0"
     implementation ("androidx.camera:camera-core:${camerax_version}")
     implementation ("androidx.camera:camera-camera2:${camerax_version}")
     implementation ("androidx.camera:camera-lifecycle:${camerax_version}")
@@ -89,4 +90,5 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
     implementation ("com.github.bumptech.glide:recyclerview-integration:4.14.2")
+
 }
